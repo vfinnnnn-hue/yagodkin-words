@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Yagodkin Word Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#07070c;--sf:#0e0e16;--sf2:#151520;--sf3:#1c1c2a;--bd:#262636;--tx:#dddbd6;--tx2:#6e6c78;--ac:#f0c040;--ac2:#3ecf8e;--rd:#ef5350;--gn:#4caf80;--bl:#5c8ee6}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--tx);font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden;touch-action:pan-y}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideL{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes micPulse{0%{box-shadow:0 0 0 0 rgba(239,83,80,.5)}70%{box-shadow:0 0 0 14px rgba(239,83,80,0)}100%{box-shadow:0 0 0 0 rgba(239,83,80,0)}}
+@keyframes flip{0%{opacity:1}40%{opacity:0}60%{opacity:0}100%{opacity:1}}
+button{cursor:pointer;font-family:inherit;border:none;outline:none;transition:all .12s}
+button:active{transform:scale(.96)}
+input,textarea{font-family:inherit;outline:none}
+
+/* Layout */
+nav{border-bottom:1px solid var(--bd);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:50}
+.wrap{max-width:700px;margin:0 auto;padding:16px 12px 120px}
+
+/* Components */
+.sf{background:var(--sf);border:1.5px solid var(--bd);border-radius:14px}
+.tab{background:transparent;border:1.5px solid var(--bd);color:var(--tx2);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;min-width:48px;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
+.tab:hover{border-color:#444;color:var(--tx)}
+.tab.on{border-color:var(--ac);color:var(--ac);background:rgba(240,192,64,.06)}
+.badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.folder{background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:16px;cursor:pointer;transition:all .2s;margin-bottom:10px}
+.folder:hover{border-color:var(--ac)}
+.folder.done{border-color:var(--gn);opacity:.85}
+.toggle{display:flex;border-radius:10px;overflow:hidden;border:1.5px solid var(--bd)}
+.toggle button{padding:10px 14px;background:var(--sf2);color:var(--tx2);font-size:13px;font-weight:600;border-right:1px solid var(--bd);flex:1;text-align:center;min-height:48px}
+.toggle button:last-child{border-right:none}
+.toggle button.on{background:rgba(240,192,64,.1);color:var(--ac)}
+.card{background:var(--sf);border:1.5px solid var(--bd);border-radius:18px;padding:28px 22px;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;cursor:pointer;transition:border-color .2s}
+.card.back{border-color:var(--ac2)}
+.card.animL{animation:slideL .25s ease}
+.card.animR{animation:slideR .25s ease}
+.card.animFlip{animation:flip .2s ease}
+.nav-arrows{display:flex;gap:12px;justify-content:center;margin:14px 0;align-items:center}
+.arrow{width:56px;height:56px;border-radius:50%;background:var(--sf2);border:1.5px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--tx);min-width:56px;min-height:56px}
+.arrow:hover{border-color:var(--ac);color:var(--ac)}
+.counter{font-size:15px;color:var(--tx2);font-weight:600;min-width:70px;text-align:center}
+.assoc{background:rgba(240,192,64,.04);border:1px solid rgba(240,192,64,.12);border-radius:12px;padding:14px;margin-top:12px;width:100%}
+.spk{width:52px;height:52px;border-radius:50%;border:2px solid var(--ac);background:rgba(240,192,64,.04);display:inline-flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;min-width:52px;min-height:52px}
+.spk:hover{background:rgba(240,192,64,.12)}
+.mic{width:60px;height:60px;border-radius:50%;border:2.5px solid var(--rd);background:rgba(239,83,80,.06);display:inline-flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;min-width:60px;min-height:60px}
+.mic.on{animation:micPulse 1.2s ease infinite;border-color:var(--rd);background:rgba(239,83,80,.15)}
+.mic.ok{border-color:var(--gn);background:rgba(76,175,128,.1)}
+.ti{background:var(--sf2);border:2px solid var(--bd);border-radius:12px;padding:14px 18px;color:var(--tx);font-size:20px;width:100%;transition:border .2s;letter-spacing:1px}
+.ti:focus{border-color:var(--ac)}.ti.ok{border-color:var(--gn)}.ti.no{border-color:var(--rd)}
+.ta{background:var(--sf2);border:2px solid var(--bd);border-radius:12px;padding:14px;color:var(--tx);font-size:14px;width:100%;resize:vertical;min-height:160px;line-height:1.7}
+.ta:focus{border-color:var(--ac)}
+.mic-status{padding:8px 12px;border-radius:8px;font-size:12px;text-align:center;margin-bottom:12px}
+.pbar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--sf2);border-radius:10px;border:1px solid var(--bd)}
+.word-row{display:grid;grid-template-columns:30px 1fr 1fr 40px;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bd);font-size:14px}
+.word-row:last-child{border-bottom:none}
+.rec{width:60px;height:60px;border-radius:50%;border:2.5px solid #e040fb;background:rgba(224,64,251,.06);display:inline-flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;min-width:60px;min-height:60px}
+.rec.on{animation:micPulse 1.2s ease infinite;border-color:#e040fb;background:rgba(224,64,251,.15)}
+.play-rec{width:48px;height:48px;border-radius:50%;border:2px solid var(--ac2);background:rgba(62,207,142,.06);display:inline-flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.tutor-audio{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(92,142,230,.06);border:1px solid rgba(92,142,230,.15);border-radius:10px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════ */
+const WPD = 10;
+const STORAGE_KEY = "yag-v15";
+const INTERVALS = [
+  { label: "New", min: 0 },
+  { label: "10m",   min: 10 },
+  { label: "1h",    min: 60 },
+  { label: "1d",    min: 1440 },
+  { label: "3d",    min: 4320 },
+  { label: "7d",    min: 10080 },
+  { label: "✓",     min: 0 }
+];
+
+// Spaced repetition steps per folder
+const REVIEW_STEPS = [
+  { label: "Learn",      icon: "\u{1F4D6}", delay: 0 },
+  { label: "Review 1",   icon: "\u{1F501}", delay: 0 },
+  { label: "Review 2",   icon: "\u{1F501}", delay: 0 },
+  { label: "Next day",   icon: "\u{1F4C5}", delay: 1*86400000 },
+  { label: "Review 3d",  icon: "\u{1F4C5}", delay: 3*86400000 },
+  { label: "Review 7d",  icon: "\u{1F4C5}", delay: 7*86400000 }
+];
+
+const DEFAULT_WORDS = [
+  {en:"pickaxe",ru:"кирка",ipa:"/ˈpɪk.æks/",say:"ПИКэкс",a:["ПИКа (карта) + ЭКСкаватор: на карте ПИКа ЭКСкаватор сломался — долбят КИРКОЙ","ПИКассо + ЭКС-жена: ПИКассо рисует КИРКОЙ на стене, ЭКС-жена в шоке","ПИКник + ЭКСпресс: на ПИКНИКе поезд-ЭКСпресс привёз гору КИРОК"]},
+  {en:"pottery",ru:"гончарные изделия",ipa:"/ˈpɑː.tɚ.i/",say:"ПАтэри",a:["ПОТТЕР (Гарри): ПОТТЕР за гончарным кругом лепит ГОРШКИ волшебной палочкой","ПАпа + ТЕРка: ПАпа лепит из глины ТЕРку — странное ГОНЧАРНОЕ изделие","ПАтрон + ТЕРмос: из ГОНЧАРНОЙ глины слепили ПАтрон и ТЕРмос"]},
+  {en:"proliferate",ru:"распространяться",ipa:"/prəˈlɪf.ə.reɪt/",say:"прэЛИФэрэйт",a:["ПРИнцесса в ЛИФТе РАЗМНОЖИЛАСЬ — их уже сотня, двери не закрыть!","ПРИвидение + ЛИФТ: ПРИвидение в ЛИФТе — на каждый этаж их больше, РАЗМНОЖИЛИСЬ","ПРИнц + ЛИФТ: ПРИнц зашёл в ЛИФТ — а там кролики, РАЗМНОЖИЛИСЬ!"]},
+  {en:"inherent",ru:"присущий",ipa:"/ɪnˈhɪr.ənt/",say:"инХИРэнт",a:["ИНдеец + ХИРУРГ: ИНдейцу ПРИСУЩ томагавк, ХИРУРГу — скальпель","ИНженер + ХИРУРГ + РЕНТА: ИНженеру ПРИСУЩЕ чертить, ХИРУРГу — резать","ИНопланетянин + ХИРУРГ: ИНопланетянину ПРИСУЩИ зелёные руки — ХИРУРГ в шоке"]},
+  {en:"alter",ru:"изменять",ipa:"/ˈɑːl.tɚ/",say:"АЛтэр",a:["АЛмаз + ТЕРка: ТЕРкой ИЗМЕНЯЮТ форму АЛмаза — искры летят!","АЛТАРЬ: у АЛТАРя жизнь ИЗМЕНЯЕТСЯ навсегда — кольцо на палец","АЛиса + ТЕРмометр: АЛиса ИЗМЕНИЛА ТЕРмометр — вместо 36 показывает 100"]},
+  {en:"abstract",ru:"абстрактный",ipa:"/ˈæb.strækt/",say:"ЭБстрэкт",a:["АБрикос + СТРЕЛка: АБрикос в форме СТРЕЛки — АБСТРАКТНАЯ скульптура в музее","АБрикос + СТРАКТОР (трактор): ТРАКТОР собран из АБрикосов — АБСТРАКТНОЕ искусство","СТРЕКОЗА собрана из кубиков — АБСТРАКТНАЯ скульптура"]},
+  {en:"concept",ru:"концепция",ipa:"/ˈkɑːn.sept/",say:"КАНсэпт",a:["КАНАТ + СЕЙФ + ПТица: КАНАТ к СЕЙФу, ПТица сверху — КОНЦЕПЦИЯ охраны","КАНИСТРА + СЕПТик: КАНИСТРУ вылили в СЕПТик — КОНЦЕПЦИЯ утилизации","КАНикулы + СЕПТябрь: КОНЦЕПЦИЯ КАНикул — закончить до СЕПТября"]},
+  {en:"encounter",ru:"встречать",ipa:"/ɪnˈkaʊn.tɚ/",say:"инКАУНтэр",a:["ИНопланетянин сел на КОРОВУ — ВСТРЕТИЛ ТЕРминатора, оба в шоке!","ИНдюк в КАУбойской шляпе — ВСТРЕТИЛ ТЕРку, она натёрла ему хвост!","ИНдеец + КАУбой + ТЕРминатор: ИНдеец скачет, КАУбой — а это ТЕРминатор!"]},
+  {en:"endless",ru:"бесконечный",ipa:"/ˈend.ləs/",say:"ЭНДлэс",a:["АНТЕНна + ЛЕСка: ЛЕСка на АНТЕНне тянется БЕСКОНЕЧНО до горизонта","АНДРЕЙ + ЛЕС: АНДРЕЙ заблудился в ЛЕСу — конца не видно, БЕСКОНЕЧНЫЙ","ЭНДИ + ЛЕСтница: ЭНДИ бежит по ЛЕСтнице — она БЕСКОНЕЧНАЯ"]},
+  {en:"capacity",ru:"способность / ёмкость",ipa:"/kəˈpæs.ə.ti/",say:"кэПЭсэти",a:["КЕПка + ПЁС + ТИгр: ПЁС в КЕПке СПОСОБЕН победить ТИгра","КЕПка + ПЕСок + ТИр: в КЕПку насыпали ПЕСок — ЁМКОСТЬ как у ТИра","КЕПка + ПЕСНЯ + ТИшина: КЕПка СПОСОБНА превратить ПЕСНЮ в ТИшину"]},
+  {en:"alive",ru:"живой",ipa:"/əˈlaɪv/",say:"эЛАЙВ",a:["ЛАЙКА (собака): ЛАЙКА выскочила из будки — ЖИВАЯ, лает, хвост бьёт!","ЛАЙнер (корабль): ЛАЙнер всплыл после шторма — он ещё ЖИВОЙ!","ЛАЙм (фрукт): разрезал ЛАЙм — а он ЖИВОЙ, сок брызнул в глаз!"]},
+  {en:"exaggerate",ru:"преувеличивать",ipa:"/ɪɡˈzædʒ.ə.reɪt/",say:"игЗЭджэрэйт",a:["ИГРА + ЗАЖИГАЛКА + РЕЙС: в ИГРЕ ЗАЖИГАЛКА размером с самолёт — ПРЕУВЕЛИЧЕНИЕ!","ИГОЛКА + ЗАЖИМ: ИГОЛКА в ЗАЖИМе выросла до размера дома — ПРЕУВЕЛИЧИЛИ!","ИГРОК + ЗЕРКАЛО: ИГРОК смотрит в ЗЕРКАЛО — отражение ПРЕУВЕЛИЧЕНО в 100 раз!"]},
+  {en:"precede",ru:"предшествовать",ipa:"/prɪˈsiːd/",say:"приСИД",a:["ПРИНЦ + СИДР: ПРИНЦ пьёт СИДР — это ПРЕДШЕСТВУЕТ пиру, сначала СИДР","ПРИЗ + СИДенье: ПРИЗ стоит на СИДенье — сядь, потом бери, ПРЕДШЕСТВУЕТ","ПРИнцесса + СИДит: ПРИнцесса СИДит на троне — трон ПРЕДШЕСТВУЕТ коронации"]},
+  {en:"augment",ru:"увеличивать",ipa:"/ɑːɡˈment/",say:"агМЕНТ",a:["АГЕНТ + МЕНТ: АГЕНТ и МЕНТ вместе — СИЛА УВЕЛИЧИЛАСЬ вдвое!","АГат (камень) + МЕНТ: МЕНТ нашёл АГат — камень УВЕЛИЧИЛСЯ до размера машины","АГРАРИЙ + МЕНТ: АГРАРИЙ показал МЕНТу огурец — тот УВЕЛИЧИЛСЯ до размера дома"]},
+  {en:"unleash",ru:"высвобождать",ipa:"/ʌnˈliːʃ/",say:"анЛИШ",a:["АНАНАС + ЛИСА: с ЛИСЫ сняли верёвку от АНАНАСА — ЛИСА ВЫСВОБОДИЛАСЬ!","АНГЕЛ + ЛИСА: АНГЕЛ отпустил ЛИСУ с поводка — ВЫСВОБОДИЛ в лес","АНТЕННА + ЛИСТ: ЛИСТ сорвался с АНТЕННЫ — ВЫСВОБОДИЛСЯ и полетел!"]},
+  {en:"plow",ru:"плуг / пахать",ipa:"/plaʊ/",say:"ПЛАУ",a:["ПЛОВ: тарелка ПЛОВА — рис вырос на поле, вспаханном ПЛУГОМ","ПЛАвки + Утка: в ПЛАвках за Уткой по полю — ПАШЕТ как трактор!","ПЛАЩ + Утка: Утка в ПЛАЩЕ ПАШЕТ поле — смешная фермерша!"]},
+  {en:"law",ru:"закон",ipa:"/lɑː/",say:"ЛА",a:["ЛАМА: ЛАМА плюнула — это ЗАКОН, лама всегда плюёт!","ЛАмпа: ЛАмпа горит — ЗАКОН физики, включил = свет","ЛАва: ЛАва течёт вниз — это ЗАКОН гравитации!"]},
+  {en:"wide",ru:"широкий",ipa:"/waɪd/",say:"УАЙД",a:["ВАТА: раскатали ВАТУ — растянулась ШИРОКО, во весь стол","УАЗик: УАЗик ШИРОКИЙ — не проходит в ворота, застрял!","УДАВ: УДАВ растянулся ШИРОКО — от стены до стены"]},
+  {en:"power",ru:"мощность / сила",ipa:"/ˈpaʊ.ɚ/",say:"ПАУэр",a:["ПАУК: ПАУК сжимает лапы — в каждой СИЛА и МОЩЬ","ПАУК + ЭРмитаж: ПАУК в ЭРмитаже — такой МОЩНЫЙ что держит люстру","ПАУЗА + ЭРнест: ЭРнест взял ПАУЗУ — набрал СИЛУ и ударил!"]},
+  {en:"evolve",ru:"развиваться",ipa:"/ɪˈvɑːlv/",say:"иВАЛВ",a:["ИВА + ВОЛК: под ИВой щенок ВОЛКА вырос в хищника — РАЗВИЛСЯ!","ИВАН + ВАЛУН: ИВАН поднимал ВАЛУН каждый день — РАЗВИЛСЯ, стал силачом!","ИВА + ВАЛЬС: ИВА РАЗВИЛАСЬ из ветки в дерево — танцует ВАЛЬС на ветру"]},
+  {en:"emerge",ru:"возникать",ipa:"/ɪˈmɝːdʒ/",say:"иМЁРДЖ",a:["ИВА + МОРЖ: из-под ИВЫ МОРЖ ВЫНЫРНУЛ — ВОЗНИК из воды!","ИМБИРЬ + МОРЖ: МОРЖ жуёт ИМБИРЬ — ВОЗНИК из ниоткуда на берегу","ИВАН + МОРЖ: ИВАН нырнул — а из воды ВОЗНИК МОРЖ вместо него!"]},
+  {en:"organize",ru:"организовывать",ipa:"/ˈɔːr.ɡə.naɪz/",say:"АРгэнайз",a:["АРБУЗ + ГАРАЖ + НОЖИ: в ГАРАЖе АРБУЗЫ и НОЖИ — ОРГАНИЗОВАНО по размеру","АРМИЯ + ГАРАЖ: АРМИЯ в ГАРАЖе — ОРГАНИЗОВАНЫ в ряд","АРКА + ГАЗета: под АРКой ГАЗеты сложены — ОРГАНИЗОВАНЫ стопкой"]},
+  {en:"surge",ru:"всплеск / резкий рост",ipa:"/sɝːdʒ/",say:"СЁРДЖ",a:["СЁРФЕР: СЁРФЕР ловит гигантскую волну — ВСПЛЕСК!","СЕРЖ (имя): СЕРЖ прыгнул в бассейн — ВСПЛЕСК воды до потолка!","СЁРЬГА: СЁРЬГА упала в воду — ВСПЛЕСК! кольца по воде"]},
+  {en:"default",ru:"по умолчанию",ipa:"/dɪˈfɑːlt/",say:"диФАЛТ",a:["ДИВАН + ФАРТУК: ДИМА снял ФАРТУК — вернулся к виду ПО УМОЛЧАНИЮ","ДИНОЗАВР + ФАЛЬШЬ: ДИНОЗАВР ФАЛЬШивый — сбросили, вернули ПО УМОЛЧАНИЮ настоящего","ФОЛЬГА: ФОЛЬГУ смяли и расправили — вернули ПО УМОЛЧАНИЮ"]},
+  {en:"landscape",ru:"ландшафт",ipa:"/ˈlænd.skeɪp/",say:"ЛЭНДскэйп",a:["ЛЕНТА + СКЕЙТ: ЛЕНТА дороги + СКЕЙТ — мчишь, ЛАНДШАФТ мелькает","ЛЕНТЯЙ + СКЕЙТ + ПЕЩЕРА: ЛЕНТЯЙ на СКЕЙТЕ въехал в ПЕЩЕРУ — ЛАНДШАФТ изменился!","ЗЕМЛЯ + СКЕЙТ: по ЗЕМЛЕ на СКЕЙТЕ — ЛАНДШАФТ летит мимо"]},
+  {en:"interact",ru:"взаимодействовать",ipa:"/ˌɪn.tɚˈækt/",say:"интэрЭКТ",a:["ИНТЕРНЕТ + АКТЁР: ИНТЕРНЕТ и АКТЁР на сцене — ВЗАИМОДЕЙСТВУЮТ через экран","ИНТЕРН + АКТЁР: ИНТЕРН и АКТЁР вместе играют — ВЗАИМОДЕЙСТВУЮТ","ИНСТРУМЕНТ + АКТЁР: АКТЁР берёт ИНСТРУМЕНТ — ВЗАИМОДЕЙСТВУЕТ с гитарой"]},
+  {en:"principle",ru:"принцип",ipa:"/ˈprɪn.sə.pəl/",say:"ПРИНсэпл",a:["ПРИНЦ + САБЛЯ: ПРИНЦ с САБЛЕЙ — ПРИНЦИП: сначала бей, потом спрашивай","ПРИНЦ + ЯБЛОКО: ПРИНЦ с ЯБЛОКОМ — ПРИНЦИП: сам вырастил, сам съел","ПРИНТЕР + СЕПАРАТОР: ПРИНТЕР работает по ПРИНЦИПУ СЕПАРАТОРа — разделяет цвета"]},
+  {en:"endeavor",ru:"усилие / стремление",ipa:"/ɪnˈdev.ɚ/",say:"инДЭВэр",a:["ИНДЮК + ДВЕРЬ: ИНДЮК ломится в ДВЕРЬ — вот это УСИЛИЕ!","ИНЖЕНЕР + ДВЕРЬ: ИНЖЕНЕР плечом в ДВЕРЬ — УСИЛИЕ! дверь не поддаётся","ИНДЕЕЦ + ДВЕРЬ: ИНДЕЕЦ топором рубит ДВЕРЬ — СТРЕМЛЕНИЕ попасть внутрь!"]},
+  {en:"unique",ru:"уникальный",ipa:"/juːˈniːk/",say:"юНИК",a:["ЕДИНОРОГ: ЕДИНОРОГ — один на планету, УНИКАЛЬНЫЙ!","ЮНИК (грузовик): грузовик один такой на свете — УНИКАЛЬНЫЙ","ЮНГА + НИКЕЛЬ: ЮНГА нашёл монету из НИКЕЛя — УНИКАЛЬНАЯ, таких нет"]},
+  {en:"astonish",ru:"поражать / изумлять",ipa:"/əˈstɑː.nɪʃ/",say:"эСТАниш",a:["СТАКАН + НИША: СТАКАН влетел в НИШУ — все ПОРАЖЕНЫ!","СТАДИОН + НИША: на СТАДИОНЕ нашли тайную НИШУ — зрители ПОРАЖЕНЫ!","СТАРИК + НИША: СТАРИК залез в НИШУ в стене — все ПОРАЖЕНЫ, как он туда влез?"]},
+  {en:"force",ru:"сила / заставлять",ipa:"/fɔːrs/",say:"ФАРС",a:["ФАРШ: мясорубка делает ФАРШ с такой СИЛОЙ — мясо летит!","ФАРА: ФАРА бьёт светом с СИЛОЙ — слепит!","ФАРТУК: сорвали ФАРТУК с СИЛОЙ — пуговицы полетели!"]},
+  {en:"aside",ru:"в сторону / помимо",ipa:"/əˈsaɪd/",say:"эСАЙД",a:["САЙТ: закрыл САЙТ — отложил В СТОРОНУ, потом посмотрю","САМОЛЁТ уходит В СТОРОНУ от айсберга","САЙДИНГ (стена): встал за САЙДИНГ — отошёл В СТОРОНУ"]},
+  {en:"artifact",ru:"артефакт",ipa:"/ˈɑːr.tə.fækt/",say:"АРтэфэкт",a:["АРТИСТ + ФАКЕЛ: АРТИСТ с ФАКЕЛОМ нашёл в пещере АРТЕФАКТ","АРБУЗ + ФАКЕЛ: в АРБУЗЕ горит ФАКЕЛ — это древний АРТЕФАКТ!","АРМИЯ + ФАКЕЛ: АРМИЯ с ФАКЕЛами откопала АРТЕФАКТ в пустыне"]},
+  {en:"enter",ru:"входить",ipa:"/ˈen.tɚ/",say:"ЭНтэр",a:["КЛАВИША ENTER: нажал ENTER — дверь открылась, ВОШЁЛ!","ЭНЕРГИЯ + ТЕРминал: с ЭНЕРГИЕЙ ВОШЁЛ в ТЕРминал аэропорта","АНТЕННА + ТЕРмос: АНТЕННА с ТЕРмосом ВОШЛА через дверь!"]},
+  {en:"entire",ru:"весь / целый",ipa:"/ɪnˈtaɪ.ɚ/",say:"инТАЙР",a:["ШИНА (тайр): гигантская ШИНА обхватила ВСЮ планету ЦЕЛИКОМ","ИНДЮК + ТАЙГА: ИНДЮК съел ВСЮ ТАЙГУ ЦЕЛИКОМ","ИНТЕРНЕТ + ТАЙГА: ИНТЕРНЕТ покрыл ВСЮ ТАЙГУ ЦЕЛИКОМ"]},
+  {en:"depend",ru:"зависеть",ipa:"/dɪˈpend/",say:"диПЭНД",a:["ДИВАН + ПЕНАЛ: ПЕНАЛ ЗАВИСИТ от ДИВАНа — лежит и не упадёт","ДИПЛОМАТ + ПЕНСИЯ: ДИПЛОМАТ ЗАВИСИТ от ПЕНСИИ — без неё никуда","ДИНОЗАВР + ПЕНЬ: ДИНОЗАВР ЗАВИСИТ от ПНЯ — сидит и без него не встанет"]},
+  {en:"exponent",ru:"показатель степени",ipa:"/ɪkˈspoʊ.nənt/",say:"икСПАнэнт",a:["ИКРА + СПАГЕТТИ: ИКРА на СПАГЕТТИ — порция растёт как ПОКАЗАТЕЛЬ СТЕПЕНИ!","ЭКСКАВАТОР + СПОНСОР: СПОНСОР дал ЭКСКАВАТОР — мощь растёт как СТЕПЕНЬ","ИКРА + СПОНСОР: от СПОНСОРА ИКРЫ всё больше — растёт СТЕПЕНЬЮ!"]},
+  {en:"upheaval",ru:"потрясение / переворот",ipa:"/ʌpˈhiː.vəl/",say:"апХИвэл",a:["ХИЖИНА + ВАЛ: ВАЛ воды поднял ХИЖИНУ — ПОТРЯСЕНИЕ!","ХИРУРГ + ВАЛенки: ХИРУРГ в ВАЛенках в операционной — ПОТРЯСЕНИЕ!","ХИП-ХОП + ВАЛун: ВАЛун танцует ХИП-ХОП — ПОТРЯСЕНИЕ, земля дрожит!"]},
+  {en:"change",ru:"изменять / менять",ipa:"/tʃeɪndʒ/",say:"ЧЭЙНДЖ",a:["ЧАЙНИК + ДЖЕМ: ЧАЙНИК наполнили ДЖЕМом вместо воды — ИЗМЕНИЛИ!","ЧЕК + ДЖИНСЫ: ЧЕК за ДЖИНСЫ — ИЗМЕНИЛ гардероб!","ЧЕМОДАН + ДЖИП: ЧЕМОДАН в ДЖИП — ИЗМЕНИЛИ план поездки!"]},
+  // WAVE Chapter 1 words
+  {en:"usher",ru:"вводить / ознаменовывать",ipa:"/ˈʌʃ.ɚ/",say:"АШэр",a:["АШАН (магазин): охранник АШАНа ВВОДИТ покупателей в зал","УШАНКА: швейцар в УШАНКЕ ВВОДИТ гостей в ресторан","АШЕР (певец): певец АШЕР ОЗНАМЕНОВЫВАЕТ начало концерта"]},
+  {en:"dawn",ru:"рассвет",ipa:"/dɑːn/",say:"ДАН",a:["ДАНя (имя): ДАНя встал на РАССВЕТЕ — солнце в глаза!","ДАНОН (йогурт): пьёшь ДАНОН на РАССВЕТЕ — солнце встаёт","ДАНИЯ: в ДАНИИ РАССВЕТ в 4 утра — белые ночи!"]},
+  {en:"wealth",ru:"богатство",ipa:"/welθ/",say:"УЭЛС",a:["УЭЛЬС (страна): в УЭЛЬСЕ нашли золото — БОГАТСТВО!","ВЕЛОСИПЕД: золотой ВЕЛОСИПЕД — признак БОГАТСТВА","ВЕЛЮР: диван из ВЕЛЮРА — признак БОГАТСТВА"]},
+  {en:"surplus",ru:"избыток",ipa:"/ˈsɝː.pləs/",say:"СЁРплэс",a:["СЮРПРИЗ: открыл коробку-СЮРПРИЗ — ИЗБЫТОК конфет, сыплются!","СЁРФЕР + ПЛЮС: СЁРФЕР поймал ПЛЮС волн — ИЗБЫТОК!","СЕРП + ПЛЮШКА: СЕРПОМ нарезали ПЛЮШЕК — ИЗБЫТОК, гора!"]},
+  {en:"rapid",ru:"быстрый",ipa:"/ˈræp.ɪd/",say:"РЭпид",a:["РАПИРА: РАПИРА рассекает воздух БЫСТРО — свист!","РЭПЕР: РЭПЕР читает БЫСТРО — язык не видно!","РАПС (растение): РАПС растёт БЫСТРО — за ночь поле жёлтое!"]},
+  {en:"diverse",ru:"разнообразный",ipa:"/dɪˈvɝːs/",say:"диВЁРС",a:["ДИВАН + ВЁДРА: на ДИВАНе РАЗНООБРАЗНЫЕ ВЁДРА — красные, синие, зелёные","ДИВЕРСАНТ: ДИВЕРСАНТ в РАЗНООБРАЗНЫХ масках — каждый раз другой","ДИМА + ВЁСЛА: у ДИМЫ РАЗНООБРАЗНЫЕ ВЁСЛА — длинные, короткие, цветные"]},
+  {en:"array",ru:"ряд / набор",ipa:"/əˈreɪ/",say:"эРЭЙ",a:["АРЕНА: на АРЕНЕ выстроен РЯД артистов — целый НАБОР","АРБУЗ + РЕЙКА: АРБУЗЫ на РЕЙКЕ в РЯД — НАБОР для праздника","АРЕНДА: в АРЕНДУ целый РЯД машин — НАБОР!"]},
+  {en:"act",ru:"действовать / акт",ipa:"/ækt/",say:"ЭКТ",a:["АКТЁР: АКТЁР ДЕЙСТВУЕТ на сцене — играет роль!","АКЦИЯ: на АКЦИИ все ДЕЙСТВУЮТ — скупают товар!","АКВАРИУМ: АКВАРИУМ ДЕЙСТВУЕТ — рыбки плывут!"]},
+  {en:"leash",ru:"поводок",ipa:"/liːʃ/",say:"ЛИШ",a:["ЛИСА: на ЛИСЕ ПОВОДОК — тянет хозяина в лес!","ЛИШай: пёс с ЛИШаём на ПОВОДКЕ — ведут к врачу","ЛИСТ: привязал ЛИСТ на ПОВОДОК — выгуливает как собаку!"]},
+  {en:"disrupt",ru:"нарушать / разрушать",ipa:"/dɪsˈrʌpt/",say:"дисРАПТ",a:["ДИСК + РАПТОР: РАПТОР раздавил ДИСК — НАРУШИЛ музыку!","ДИСКО + РАПИРА: РАПИРОЙ НАРУШИЛИ ДИСКО-шар — осколки по полу!","РАСПУТИН: РАСПУТИН НАРУШИЛ порядок во дворце — всё перевернул"]},
+  {en:"stable",ru:"стабильный",ipa:"/ˈsteɪ.bəl/",say:"СТЭЙбл",a:["СТЕЙК + БЛЮДО: СТЕЙК на БЛЮДЕ — СТАБИЛЬНО лежит, не падает","СТЕЙК: СТЕЙК одинаковый каждый раз — СТАБИЛЬНОЕ качество","СТАКАН + БЛЮДЦЕ: СТАКАН на БЛЮДЦЕ — СТАБИЛЬНО стоит!"]},
+  {en:"catastrophe",ru:"катастрофа",ipa:"/kəˈtæs.trə.fi/",say:"кэТЭСтрэфи",a:["КАСТРЮЛЯ + СТРОФА: КАСТРЮЛЯ упала на книгу со СТРОФАМИ — КАТАСТРОФА!","КАКТУС + ТРОФЕЙ: КАКТУС упал на ТРОФЕЙ — разбился! КАТАСТРОФА!","КАТОК + СТРЕЛА: СТРЕЛА попала в КАТОК — КАТАСТРОФА!"]},
+  {en:"imagine",ru:"воображать",ipa:"/ɪˈmædʒ.ɪn/",say:"иМЭджин",a:["ИМБИРЬ + ДЖИН: закрыл глаза, ВООБРАЖАЕШЬ ИМБИРЬ в ДЖИНе — вкус во рту!","ИВАН + ДЖИНН: ИВАН ВООБРАЖАЕТ — появился ДЖИНН!","ИМБИРЬ + ДЖИНСЫ: ВООБРАЗИ: ДЖИНСЫ из ИМБИРЯ — пахнут и хрустят!"]},
+  {en:"scale",ru:"масштаб",ipa:"/skeɪl/",say:"СКЭЙЛ",a:["СКАЛА: СКАЛА такого МАСШТАБА — от земли до облаков!","СКЕЛЕТ: СКЕЛЕТ динозавра — МАСШТАБ! занимает весь музей","СКЕЙТ: СКЕЙТ-парк МАСШТАБА города — катаются тысячи!"]},
+  {en:"immense",ru:"огромный",ipa:"/ɪˈmens/",say:"иМЭНС",a:["ИМБИРЬ + МЕШОК: МЕШОК ИМБИРЯ ОГРОМНЫЙ — в 10 раз больше человека!","ИММИГРАНТ + МЕШОК: ИММИГРАНТ несёт ОГРОМНЫЙ МЕШОК","ИВАН + МЕНЗУРКА: МЕНЗУРКА ИВАНА выросла до ОГРОМНОГО размера"]},
+  {en:"challenge",ru:"вызов",ipa:"/ˈtʃæl.ɪndʒ/",say:"ЧЭлиндж",a:["ЧАЙНИК + ЛИНЗА + ДЖИП: ЧАЙНИК через ЛИНЗУ поджёг ДЖИП — ВЫЗОВ!","ЧЕЛЮСТЬ + ДЖИП: ЧЕЛЮСТЬ откусила колесо ДЖИПа — ВЫЗОВ!","ЧЕК + ЛИНЗА + ДЖЕМ: через ЛИНЗУ ЧЕК за ДЖЕМ — ВЫЗОВ: прочитать мелкий шрифт!"]},
+  {en:"century",ru:"век",ipa:"/ˈsen.tʃɚ.i/",say:"СЭНчэри",a:["СЕНАТОР + ЧЕРНИКА: СЕНАТОР ест ЧЕРНИКУ уже ВЕК — 100 лет!","СЕНО + ЧЕРЕПАХА: ЧЕРЕПАХА в СЕНЕ живёт уже ВЕК","СЕНБЕРНАР + ЧЕРЕШНЯ: СЕНБЕРНАР ест ЧЕРЕШНЮ — живёт целый ВЕК!"]},
+  {en:"stand",ru:"стоять",ipa:"/stænd/",say:"СТЭНД",a:["СТЕНД: на СТЕНДЕ картина СТОИТ вертикально","СТЕНКА: у СТЕНКИ СТОИТ солдат — не шевелится!","СТАНДАРТ: СТАНДАРТ — СТОИШЬ ровно, по линейке"]},
+  {en:"contain",ru:"содержать / сдерживать",ipa:"/kənˈteɪn/",say:"кэнТЭЙН",a:["КОНТЕЙНЕР: КОНТЕЙНЕР СОДЕРЖИТ тонны груза внутри","КОНФЕТА + ТЕЙП (лента): КОНФЕТА замотана ТЕЙПом — СДЕРЖИВАЕТ начинку!","КЕНГУРУ + ТЕЙП: КЕНГУРУ замотали ТЕЙПом сумку — СДЕРЖИВАЕТ малыша!"]},
+  {en:"curb",ru:"ограничивать",ipa:"/kɝːb/",say:"КЁРБ",a:["КОРАБЛЬ: КОРАБЛЬ у причала — ОГРАНИЧЕН якорем, не уплыть!","КОРЗИНА + БОРДЮР: КОРЗИНА за БОРДЮРОМ — ОГРАНИЧЕНА, не проедет!","КЁРЛИНГ + БУЛЫЖНИК: в КЁРЛИНГе БУЛЫЖНИК ОГРАНИЧЕН линией"]},
+  {en:"implicate",ru:"вовлекать / подразумевать",ipa:"/ˈɪm.plɪ.keɪt/",say:"ИМпликэйт",a:["ИМПУЛЬС + КАТУШКА: ИМПУЛЬС в КАТУШКЕ ВОВЛЕКАЕТ все лампочки — загорелись!","ИМБИРЬ + ПЛАСТИНКА + КЕЙС: ИМБИРЬ в КЕЙСЕ — ВОВЛЕКАЕТ в дегустацию!","ИМПЕРИЯ + ЛИКЁР + КЕЙС: ИМПЕРИЯ ВОВЛЕКАЕТ всех — ЛИКЁР в КЕЙСЕ!"]},
+  {en:"species",ru:"вид",ipa:"/ˈspiː.ʃiːz/",say:"СПИшиз",a:["СПИЧКА + ШИШка: каждая СПИЧКА и ШИШка — отдельный ВИД!","СПЕЦИЯ: каждая СПЕЦИЯ — отдельный ВИД растения","СПИНА + ШИШКА: по ШИШКЕ на СПИНЕ — у каждого ВИДа своя!"]},
+  {en:"dire",ru:"ужасный / критический",ipa:"/daɪ.ɚ/",say:"ДАЙэр",a:["ДАЙВЕР: ДАЙВЕР попал в УЖАСНУЮ ситуацию — акула рядом!","ДАЙ + ЁРШ: ДАЙ ЕРШа — он в УЖАСНОМ состоянии, колючки торчат!","ДАЙКОН (овощ): ДАЙКОН вырос УЖАСНОГО размера — пугает соседей!"]},
+  {en:"equal",ru:"равный",ipa:"/ˈiː.kwəl/",say:"ИКуэл",a:["ИКРА: каждая икринка ИКРЫ РАВНА другой — одинаковые шарики!","ИГРУШКА + КУЛАК: две ИГРУШКИ в КУЛАКЕ — РАВНЫЕ по размеру","ИГОЛКА + КУЛЁК: ИГОЛКИ в КУЛЬКе все РАВНЫЕ — одна к одной"]},
+  {en:"expose",ru:"подвергать / раскрывать",ipa:"/ɪkˈspoʊz/",say:"икСПАУЗ",a:["ЭКСКУРСИЯ + ПАУЗА: на ЭКСКУРСИИ ПАУЗА — гид РАСКРЫВАЕТ тайну!","ЭКРАН + ПАУЗА: нажал ПАУЗУ на ЭКРАНЕ — РАСКРЫЛ секретный кадр!","ЭКСПОЗИЦИЯ: на ЭКСПОЗИЦИИ РАСКРЫЛИ секрет картины"]},
+  {en:"precarious",ru:"нестабильный / шаткий",ipa:"/prɪˈker.i.əs/",say:"приКЕРиэс",a:["ПРИНЦ + КЕРАМИКА: ПРИНЦ на КЕРАМИЧЕСКОЙ полке — ШАТКО, вот-вот упадёт!","ПРИЗ + КИРПИЧ: ПРИЗ стоит на КИРПИЧе на краю — НЕСТАБИЛЬНО!","ПРИНТЕР + КЕРОСИН: ПРИНТЕР на бочке с КЕРОСИНОМ — ШАТКАЯ ситуация!"]},
+  {en:"contemplate",ru:"размышлять",ipa:"/ˈkɑːn.təm.pleɪt/",say:"КАНтэмплэйт",a:["КОНФЕТА + ТАРЕЛКА: перед КОНФЕТОЙ на ТАРЕЛКЕ — РАЗМЫШЛЯЕТ, съесть или нет?","КАНТ (философ) + ПЛИТА: КАНТ сидит на ПЛИТЕ и РАЗМЫШЛЯЕТ о вечном!","КАНАТ + ЛЕЙТЕНАНТ: ЛЕЙТЕНАНТ РАЗМЫШЛЯЕТ — перейти КАНАТ?"]},
+  {en:"intelligent",ru:"умный / интеллектуальный",ipa:"/ɪnˈtel.ɪ.dʒənt/",say:"инТЕЛиджэнт",a:["ИНТЕРНЕТ + ТЕЛЕФОН + ДЖЕНТЛЬМЕН: ДЖЕНТЛЬМЕН с ТЕЛЕФОНОМ — УМНЫЙ!","ИНЖЕНЕР + ТЕЛЕВИЗОР + ДЖИНН: ИНЖЕНЕР собрал ТВ — ДЖИНН вылез, УМНЫЙ!","ИНТЕЛЛИГЕНТ + ТЕЛЕСКОП: ИНТЕЛЛИГЕНТ в ТЕЛЕСКОП — УМНЫЙ, звёзды считает"]},
+  {en:"lead",ru:"вести / приводить",ipa:"/liːd/",say:"ЛИД",a:["ЛИДЕР: ЛИДЕР ВЕДЁТ колонну за собой вперёд!","ЛИМУЗИН: ЛИМУЗИН ВЕДЁТ по дороге — за ним караван!","ЛИНЕЙКА: ЛИНЕЙКА ВЕДЁТ прямую линию по доске"]},
+  {en:"consume",ru:"потреблять / поглощать",ipa:"/kənˈsuːm/",say:"кэнСУМ",a:["КОНСЕРВЫ + СУМКА: ПОТРЕБЛЯТЬ КОНСЕРВЫ из СУМКИ — гора банок!","КЕНГУРУ + СУМКА: КЕНГУРУ ПОГЛОЩАЕТ еду из СУМКИ — всё съел!","КОНФЕТЫ + СУМО: борец СУМО ПОТРЕБЛЯЕТ КОНФЕТЫ — тоннами!"]},
+  {en:"distill",ru:"извлекать / перегонять",ipa:"/dɪˈstɪl/",say:"диСТИЛ",a:["ДИСК + СТИЛЬ: из ДИСКа ИЗВЛЕКАЮТ СТИЛЬ — как из аппарата!","ДИСТИЛЛЯТОР: ДИСТИЛЛЯТОР ИЗВЛЕКАЕТ чистую воду из грязной","ДИНОЗАВР + СТИЛЕТ: из ДИНОЗАВРА ИЗВЛЕКЛИ СТИЛЕТ — перегнали кость!"]},
+  {en:"essence",ru:"сущность",ipa:"/ˈes.əns/",say:"ЭСэнс",a:["ЕССЕНТУКИ: бутылка ЕССЕНТУКОВ — СУЩНОСТЬ минералов внутри!","ЕСТь + СЕНСАЦИЯ: СЕНСАЦИЯ! нашли СУЩНОСТЬ вкуса — это соль!","ЕСЬ + АНАНАС: ЕСЬ АНАНАС — чувствуешь СУЩНОСТЬ лета!"]},
+  {en:"capable",ru:"способный",ipa:"/ˈkeɪ.pə.bəl/",say:"КЭЙпэбл",a:["КЕПКА + ПЁС + БЛЮДО: ПЁС в КЕПКЕ СПОСОБЕН принести БЛЮДО!","КЕЙС + ПАБЛО (Пикассо): ПАБЛО с КЕЙСОМ СПОСОБЕН нарисовать шедевр!","КЕКС + ПАБЛО: ПАБЛО СПОСОБЕН слепить КЕКС из глины — гений!"]},
+  {en:"tackle",ru:"решать (проблему)",ipa:"/ˈtæk.əl/",say:"ТЭкл",a:["ТАКСИ + КЛЕЩИ: ТАКСИСТ берёт КЛЕЩИ — РЕШАЕТ проблему с колесом","ТЁЩА + КЛЕЙ: ТЁЩА с КЛЕЕМ РЕШАЕТ проблему — склеила вазу!","ТАКСИ + КЛЯП: ТАКСИСТ РЕШАЕТ проблему с шумным пассажиром!"]},
+  {en:"tract",ru:"управлять",ipa:"/trækt/",say:"ТРЭКТ",a:["ТРАКТОР: ТРАКТОР УПРАВЛЯЕТ полем — пашет землю!","ТРЕК + ШТУРВАЛ: на ТРЕКЕ УПРАВЛЯЕШЬ штурвалом — гонка!","ТРАКТ (дорога): на ТРАКТЕ УПРАВЛЯЕШЬ каретой — лошади вперёд!"]},
+  {en:"ordinary",ru:"обычный",ipa:"/ˈɔːr.dɪ.ner.i/",say:"АРдинэри",a:["АРБУЗ + ДИНОЗАВР: в АРМИИ ДИНОЗАВР — это ОБЫЧНОЕ дело!","АРБУЗ + ДИНАР: АРБУЗ за ДИНАР — ОБЫЧНОЕ дело на рынке","АРМИЯ + ОБЕДНЯ: ОБЕДНЯ в АРМИИ — ОБЫЧНОЕ дело"]},
+  {en:"sustain",ru:"поддерживать",ipa:"/səˈsteɪn/",say:"сэСТЭЙН",a:["СОСЕД + СТЕЙК: СОСЕД ПОДДЕРЖИВАЕТ тебя — несёт СТЕЙК!","СУСТАВ: СУСТАВ ПОДДЕРЖИВАЕТ ногу при ходьбе","СОСУЛЬКА + СТЕНА: СТЕНА ПОДДЕРЖИВАЕТ СОСУЛЬКУ — держит!"]},
+  {en:"retrospect",ru:"ретроспектива",ipa:"/ˈret.rə.spekt/",say:"РЕТрэспект",a:["РЕТРО + СПЕКТАКЛЬ: РЕТРО СПЕКТАКЛЬ — взгляд назад, РЕТРОСПЕКТИВА!","РЕТРО + СПЕКТР: РЕТРО-фото в СПЕКТРе цветов — РЕТРОСПЕКТИВА","РЕТРО-машина + СПЕКТАКЛЬ: РЕТРО-машина в СПЕКТАКЛЕ — 60-е!"]},
+  {en:"imitate",ru:"имитировать",ipa:"/ˈɪm.ɪ.teɪt/",say:"ИМитэйт",a:["ОБЕЗЬЯНА + ИМБИРЬ: обезьяна ест ИМБИРЬ, ИМИТИРУЯ человека — ложкой!","ИМБИРЬ + МИТИНГ + ТЕЙП: на МИТИНГЕ ИМИТИРУЮТ крики через ТЕЙП","ИММИГРАНТ + ТЕЙП: ИММИГРАНТ ИМИТИРУЕТ акцент — записывает на ТЕЙП"]},
+  {en:"eventual",ru:"конечный / итоговый",ipa:"/ɪˈven.tʃu.əl/",say:"иВЭНчуэл",a:["ИВАН + ВЕНТИЛЯТОР: ВЕНТИЛЯТОР ИВАНА крутится — ИТОГОВЫЙ результат: ветер!","ИВАН + ВЕНЧИК: ИВАН мешает ВЕНЧИКОМ — КОНЕЧНЫЙ результат: торт!","ИВЕНТ (мероприятие): на ИВЕНТе — ИТОГОВЫЙ результат: аплодисменты!"]},
+  {en:"perform",ru:"выполнять",ipa:"/pɚˈfɔːrm/",say:"пэрФАРМ",a:["ПЕРЕЦ + ФЕРМА: на ФЕРМЕ ВЫПОЛНЯЮТ план по ПЕРЦУ — урожай!","ПЕРЧАТКА + ФАРМАЦЕВТ: ФАРМАЦЕВТ в ПЕРЧАТКАХ ВЫПОЛНЯЕТ рецепт","ПЕРВЫЙ + ФАРМЕР: ПЕРВЫЙ ФАРМЕР ВЫПОЛНЯЕТ посев — руками в землю!"]},
+  {en:"cognition",ru:"познание",ipa:"/kɑːɡˈnɪʃ.ən/",say:"когНИшэн",a:["КОГОТЬ + НИША: КОГТём открыл НИШУ — ПОЗНАЛ тайну!","КОНЬЯК + НИША: после КОНЬЯКА в НИШЕ — ПОЗНАНИЕ мира глубже!","КОГТИ + КНИГА: КОГТЯми открыл КНИГУ — ПОЗНАНИЕ!"]},
+  {en:"able",ru:"способный",ipa:"/ˈeɪ.bəl/",say:"ЭЙбл",a:["ЯБЛОКО: ЯБЛОКО СПОСОБНО упасть на голову — открытие Ньютона!","ЭЙФЕЛЕВА башня: ЭЙФЕЛЕВА башня СПОСОБНА выстоять любой ветер!","АЙСБЕРГ: АЙСБЕРГ СПОСОБЕН утопить корабль!"]},
+  {en:"vision",ru:"зрение",ipa:"/ˈvɪʒ.ən/",say:"ВИжн",a:["ВИШНЯ: ВИШНЯ такая мелкая — нужно хорошее ЗРЕНИЕ чтобы найти!","ВИЗИТ + ЖЕНА: на ВИЗИТе ЖЕНА проверяет ЗРЕНИЕ","ВИЗА + ЖНЕЦ: ЖНЕЦ проверяет ВИЗУ — нужно острое ЗРЕНИЕ!"]},
+  {en:"speech",ru:"речь",ipa:"/spiːtʃ/",say:"СПИЧ",a:["СПИЧКА: СПИЧКА горит и произносит РЕЧЬ — пламя как язык!","СПИЦА: СПИЦА стучит — как будто произносит РЕЧЬ, тук-тук-тук!","СПИСОК + ЧАЙ: перед СПИСКОМ с ЧАЕМ — готовит РЕЧЬ!"]},
+  {en:"empathy",ru:"эмпатия",ipa:"/ˈem.pə.θi/",say:"ЭМпэси",a:["ЭМИГРАНТ + ПАСХА: ЭМИГРАНТ на ПАСХУ плачет — все сочувствуют, ЭМПАТИЯ","ЭМИР + ПАСТУХ: ЭМИР дарит ПАСТУХУ золото — ЭМПАТИЯ к бедным!","ЭМБЛЕМА + ПАСТЬ: на ЭМБЛЕМЕ ПАСТЬ льва — но он добрый, ЭМПАТИЯ!"]},
+  {en:"massive",ru:"огромный",ipa:"/ˈmæs.ɪv/",say:"МЭсив",a:["МАССИВ гор: МАССИВ гор — ОГРОМНЫЙ, до горизонта!","МАСЛО + СИРОП: МАСЛА и СИРОПа ОГРОМНОЕ количество — лужа!","МАСТЕР + СИВКА: МАСТЕР оседлал СИВКУ — конь ОГРОМНЫЙ, до облаков!"]},
+  {en:"parallel",ru:"параллельный",ipa:"/ˈper.ə.lel/",say:"ПЭрэлел",a:["ПАРАД + ЛИЛИЯ: на ПАРАДЕ ЛИЛИИ в ПАРАЛЛЕЛЬНЫХ рядах!","ПАРАШЮТ + ЛЕНТА: ПАРАШЮТ и ЛЕНТА летят ПАРАЛЛЕЛЬНО в небе","ПАРЕНЬ + ЛЕЛЯ: ПАРЕНЬ и ЛЕЛЯ идут ПАРАЛЛЕЛЬНО по разным сторонам"]},
+  {en:"explode",ru:"взрываться",ipa:"/ɪkˈsploʊd/",say:"икСПЛАУД",a:["ЭКСКАВАТОР + ПЛУГ: ЭКСКАВАТОР ударил ПЛУГом по трубе — ВЗРЫВ!","ЭСКИМО + ПЛАВКИ: ЭСКИМО ВЗОРВАЛОСЬ в ПЛАВКАХ — мороженое везде!","ЭКРАН + ПЛАУНЫ: ЭКРАН ВЗОРВАЛСЯ — ПЛАУНЫ полетели!"]}
+];
+
+/* ═══════════════════════════════════════════
+   TUTOR AUDIO FILES (served from same directory)
+   ═══════════════════════════════════════════ */
+const TUTOR_AUDIO = [
+  { file: "WAVE CHAPTER 1 Short Forms P2.mp3", label: "WAVE Ch.1 Part 2" },
+  { file: "WAVE CHAPTER 1 Short Forms P3.mp3", label: "WAVE Ch.1 Part 3" }
+];
+
+/* ═══════════════════════════════════════════
+   VOICE RECORDER (record user, play back to compare)
+   ═══════════════════════════════════════════ */
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordedBlob = null;
+let recordedUrl = null;
+
+async function startRecording() {
+  try {
+    if (!micStream) {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      S.micReady = true;
+    }
+    recordedChunks = [];
+    recordedBlob = null;
+    if (recordedUrl) { URL.revokeObjectURL(recordedUrl); recordedUrl = null; }
+    mediaRecorder = new MediaRecorder(micStream);
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      recordedBlob = new Blob(recordedChunks, { type: "audio/webm" });
+      recordedUrl = URL.createObjectURL(recordedBlob);
+      S.recording = false;
+      S.hasRecording = true;
+      render();
+    };
+    mediaRecorder.start();
+    S.recording = true;
+    S.hasRecording = false;
+    render();
+  } catch (e) {
+    S.recording = false;
+    render();
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+  }
+}
+
+function playRecording() {
+  if (recordedUrl) {
+    const a = new Audio(recordedUrl);
+    a.play();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════ */
+const S = {
+  words: [],
+  folders: [],
+  view: "dash",       // dash | player | add | folder
+  folderId: null,
+  cardIdx: 0,
+  flipped: false,
+  cardAnim: "",        // slideL | slideR | flip
+  sub: "cards",        // cards | review | dictation | list
+  direction: "ru",     // ru (ru→en) | en (en→ru)
+  speed: 1,
+  // Mic state
+  micReady: false,
+  micListening: false,
+  micHeard: "",
+  micScore: null,
+  // Dictation state
+  dictInput: "",
+  dictResult: null,     // true | false | null
+  dictAnswer: "",
+  // Player state
+  playing: false,
+  playerFolderIdx: null,
+  playerWordIdx: -1,
+  autoNext: true,       // auto-play next folder
+  // Recording state
+  recording: false,
+  hasRecording: false,
+  // Shuffle state
+  shuffledIds: null,  // null = not shuffled, array = shuffled order
+  // Add tab state
+  addText: "",
+  addPreview: null
+};
+
+/* ═══════════════════════════════════════════
+   STORAGE
+   ═══════════════════════════════════════════ */
+function buildFolders(words) {
+  const folders = [];
+  for (let i = 0; i < words.length; i += WPD) {
+    const ids = words.slice(i, i + WPD).map(w => w.id);
+    const fIdx = Math.floor(i / WPD);
+    const existing = S.folders.find(f => f.id === fIdx);
+    folders.push({
+      id: fIdx,
+      ids: ids,
+      num: fIdx + 1,
+      // reviews: array of 5 timestamps [learned, rev1, rev2, rev3_3d, rev4_7d]
+      reviews: existing && existing.reviews && existing.reviews.length >= 6 ? existing.reviews : (existing && existing.reviews ? [...existing.reviews, ...Array(6 - (existing.reviews.length || 0)).fill(null)].slice(0, 6) : [null, null, null, null, null, null]),
+      // backward compat: migrate old "done" to reviews[0]
+      ...(existing && existing.done && (!existing.reviews || !existing.reviews[0])
+        ? { reviews: [existing.done, null, null, null, null, null] } : {})
+    });
+  }
+  return folders;
+}
+
+// Helper: get current review step index for a folder (0-4, or 5 = complete)
+function getReviewStep(f) {
+  for (let i = 0; i < 6; i++) { if (!f.reviews[i]) return i; }
+  return 6; // all done
+}
+
+// Helper: is next review available now?
+function isReviewAvailable(f) {
+  const step = getReviewStep(f);
+  if (step >= 6) return false; // complete
+  if (step === 0) return true; // not started
+  const lastReview = f.reviews[step - 1];
+  if (!lastReview) return true;
+  const delay = REVIEW_STEPS[step].delay;
+  return Date.now() >= lastReview + delay;
+}
+
+// Helper: when is next review due?
+function nextReviewDate(f) {
+  const step = getReviewStep(f);
+  if (step >= 6 || step === 0) return null;
+  const lastReview = f.reviews[step - 1];
+  if (!lastReview) return null;
+  return new Date(lastReview + REVIEW_STEPS[step].delay);
+}
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (d && d.words && d.words.length) {
+      S.words = d.words;
+      S.folders = d.folders || [];
+      S.folders = buildFolders(S.words);
+    } else {
+      initDefaults();
+    }
+  } catch (e) { initDefaults(); }
+}
+
+function initDefaults() {
+  S.words = DEFAULT_WORDS.map((w, i) => ({ ...w, id: i, step: 0, nr: 0, kn: false }));
+  S.folders = buildFolders(S.words);
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ words: S.words, folders: S.folders }));
+  } catch (e) {}
+}
+
+/* ═══════════════════════════════════════════
+   SPEECH SYNTHESIS (with Chrome bug workarounds)
+   ═══════════════════════════════════════════ */
+let usVoice = null;
+
+function loadVoices() {
+  const vs = speechSynthesis.getVoices();
+  usVoice = vs.find(v => v.lang === "en-US" && /google/i.test(v.name))
+    || vs.find(v => v.lang === "en-US" && /samantha/i.test(v.name))
+    || vs.find(v => v.lang === "en-US")
+    || vs.find(v => v.lang.startsWith("en"));
+}
+speechSynthesis.addEventListener("voiceschanged", loadVoices);
+loadVoices();
+
+// Chrome bug #679437: speechSynthesis freezes after ~15s
+setInterval(() => { if (speechSynthesis.speaking) speechSynthesis.resume(); }, 5000);
+
+function speakWord(word, rate, onDone) {
+  speechSynthesis.cancel();
+  setTimeout(() => {
+    loadVoices(); // refresh voice each time
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = "en-US";
+    u.rate = rate || 1;
+    u.pitch = 1;
+    if (usVoice) u.voice = usVoice;
+    if (onDone) {
+      const fallbackMs = Math.max(3000, word.length * 400 / (rate || 1));
+      const fallback = setTimeout(() => { onDone(); }, fallbackMs);
+      u.onend = () => { clearTimeout(fallback); onDone(); };
+      u.onerror = () => { clearTimeout(fallback); onDone(); };
+    }
+    speechSynthesis.speak(u);
+  }, 50);
+}
+
+function speak(word) { speakWord(word, S.speed); }
+
+/* ═══════════════════════════════════════════
+   PLAYER (folder-based, stops after folder by default)
+   ═══════════════════════════════════════════ */
+function playFolder(fIdx, wIdx) {
+  const f = S.folders[fIdx];
+  if (!f) { stopPlayer(); return; }
+  const fw = getFolderWords(f);
+  if (wIdx >= fw.length) {
+    // Folder finished
+    if (S.autoNext && fIdx + 1 < S.folders.length) {
+      S.playerFolderIdx = fIdx + 1;
+      S.playerWordIdx = 0;
+      render();
+      setTimeout(() => {
+        if (!S.playing) return;
+        playFolder(fIdx + 1, 0);
+      }, 800);
+    } else {
+      stopPlayer();
+    }
+    return;
+  }
+  S.playing = true;
+  S.playerFolderIdx = fIdx;
+  S.playerWordIdx = wIdx;
+  render();
+  speakWord(fw[wIdx].en, S.speed, () => {
+    setTimeout(() => {
+      if (!S.playing) return;
+      playFolder(fIdx, wIdx + 1);
+    }, 600);
+  });
+}
+
+function stopPlayer() {
+  S.playing = false;
+  speechSynthesis.cancel();
+  S.playerWordIdx = -1;
+  S.playerFolderIdx = null;
+  render();
+}
+
+/* ═══════════════════════════════════════════
+   MICROPHONE (request once, keep stream alive)
+   ═══════════════════════════════════════════ */
+let micStream = null;
+
+async function initMic() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    S.micReady = true;
+    // Don't stop tracks — keeps Chrome permission alive
+  } catch (e) {
+    S.micReady = false;
+  }
+  render();
+}
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+
+function startMic(targetWord) {
+  if (!SpeechRecognitionAPI) return;
+  if (recognizer) { try { recognizer.abort(); } catch (e) {} }
+
+  recognizer = new SpeechRecognitionAPI();
+  recognizer.lang = "en-US";
+  recognizer.interimResults = false;
+  recognizer.maxAlternatives = 5;
+
+  recognizer.onstart = () => { S.micListening = true; S.micHeard = ""; S.micScore = null; render(); };
+  recognizer.onresult = (e) => {
+    const res = e.results[0];
+    let bestScore = 0, bestText = "";
+    for (let i = 0; i < res.length; i++) {
+      const text = res[i].transcript;
+      const score = similarity(text, targetWord);
+      if (score > bestScore) { bestScore = score; bestText = text; }
+    }
+    S.micHeard = bestText || res[0].transcript;
+    S.micScore = Math.round(Math.max(bestScore, similarity(res[0].transcript, targetWord)) * 100);
+    S.micListening = false;
+    render();
+  };
+  recognizer.onerror = (e) => {
+    S.micListening = false;
+    if (e.error !== "aborted") {
+      S.micHeard = e.error === "no-speech" ? "(silence \u2014 speak louder)" : "(error: " + e.error + ")";
+      S.micScore = 0;
+    }
+    render();
+  };
+  recognizer.onend = () => { S.micListening = false; render(); };
+  recognizer.start();
+}
+
+/* ═══════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════ */
+function normalize(s) { return s.toLowerCase().replace(/[^a-z]/g, ""); }
+
+function similarity(heard, target) {
+  const a = normalize(heard), b = normalize(target);
+  if (a === b) return 1;
+  if (!a || !b) return 0;
+  let matches = 0;
+  const shorter = a.length <= b.length ? a : b;
+  const longer = a.length > b.length ? a : b;
+  for (let i = 0; i < shorter.length; i++) {
+    if (shorter[i] === longer[i]) matches++;
+  }
+  return matches / longer.length;
+}
+
+function scoreColor(s) { return s >= 85 ? "var(--gn)" : s >= 55 ? "var(--ac)" : "var(--rd)"; }
+function formatDate(ts) { return ts ? new Date(ts).toLocaleDateString("en-US", { day: "numeric", month: "short" }) : "—"; }
+function daysAgo(ts) { if (!ts) return ""; const d = Math.floor((Date.now() - ts) / 86400000); return d === 0 ? "today" : d + "d ago"; }
+
+function getCurrentFolder() { return S.folders.find(f => f.id === S.folderId); }
+function getFolderWords(f) { return f ? f.ids.map(id => S.words.find(w => w.id === id)).filter(Boolean) : []; }
+
+function parseWords(text) {
+  const lines = text.split("\n").map(l => l.trim()).filter(l => l);
+  const words = [];
+  const hasSep = lines.some(l => /\t|—|–|--/.test(l));
+  if (hasSep) {
+    lines.forEach(l => {
+      const parts = l.split(/\t|—|–|--/).map(x => x.trim()).filter(x => x);
+      if (parts.length >= 2) {
+        const isRuFirst = /[а-яёА-ЯЁ]/.test(parts[0]);
+        words.push({ en: isRuFirst ? parts[1] : parts[0], ru: isRuFirst ? parts[0] : parts[1] });
+      }
+    });
+  } else {
+    for (let i = 0; i < lines.length - 1; i += 2) {
+      const a = lines[i], b = lines[i + 1];
+      const aIsRu = /[а-яёА-ЯЁ]/.test(a);
+      words.push(aIsRu ? { en: b, ru: a } : { en: a, ru: b });
+    }
+  }
+  return words;
+}
+
+function addWords(parsed) {
+  const existing = new Set(S.words.map(w => normalize(w.en)));
+  let added = 0;
+  let maxId = S.words.reduce((m, w) => Math.max(m, w.id), -1);
+  parsed.forEach(w => {
+    const n = normalize(w.en);
+    if (!n || existing.has(n)) return;
+    existing.add(n);
+    maxId++;
+    S.words.push({
+      en: w.en.trim(), ru: w.ru.trim(),
+      ipa: "", say: "", a: "",
+      id: maxId, step: 0, nr: 0, kn: false
+    });
+    added++;
+  });
+  S.folders = buildFolders(S.words);
+  save();
+  return added;
+}
+
+/* ═══════════════════════════════════════════
+   DOM HELPERS
+   ═══════════════════════════════════════════ */
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    Object.entries(attrs).forEach(([k, v]) => {
+      if (k === "style" && typeof v === "object") Object.assign(e.style, v);
+      else if (k === "className") e.className = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2).toLowerCase(), v);
+      else e.setAttribute(k, v);
+    });
+  }
+  children.flat(Infinity).forEach(c => {
+    if (c == null || c === false) return;
+    e.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
+  });
+  return e;
+}
+
+/* ═══════════════════════════════════════════
+   SWIPE HANDLER
+   ═══════════════════════════════════════════ */
+let touchStartX = 0, touchStartY = 0;
+
+function setupSwipe(element, onLeft, onRight) {
+  element.addEventListener("touchstart", e => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+  element.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    const dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0 && onLeft) onLeft();
+      if (dx > 0 && onRight) onRight();
+    }
+  }, { passive: true });
+}
+
+/* ═══════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════ */
+function render() {
+  const root = document.getElementById("app");
+  root.innerHTML = "";
+
+  const learned = S.words.filter(w => w.kn);
+
+  // NAV
+  const navItems = [
+    { id: "dash", icon: "\u{1F4C2}" },
+    { id: "plan", icon: "\u{1F4CB}" },
+    { id: "player", icon: "\u{1F3A7}" },
+    { id: "add", icon: "+" }
+  ];
+  root.appendChild(el("nav", null,
+    el("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+      S.view === "folder" ? el("button", {
+        style: { background: "var(--sf2)", color: "var(--ac)", padding: "8px 14px", borderRadius: "8px", fontSize: "14px", border: "1px solid var(--bd)", minHeight: "40px" },
+        onClick: () => { S.view = "dash"; stopPlayer(); render(); }
+      }, "\u2190") : null,
+      el("div", { style: { fontSize: "17px", fontWeight: "800", color: "var(--ac)", letterSpacing: "-0.3px" } }, "Yagodkin")
+    ),
+    el("div", { style: { display: "flex", gap: "4px" } },
+      ...navItems.map(n => el("button", {
+        className: "tab" + (S.view === n.id ? " on" : ""),
+        onClick: () => { S.view = n.id; if (n.id !== "player") stopPlayer(); S.addPreview = null; render(); }
+      }, n.icon))
+    )
+  ));
+
+  const wrap = el("div", { className: "wrap" });
+  root.appendChild(wrap);
+
+  if (S.view === "dash") renderDash(wrap);
+  else if (S.view === "plan") renderPlan(wrap);
+  else if (S.view === "player") renderPlayer(wrap);
+  else if (S.view === "add") renderAdd(wrap);
+  else if (S.view === "folder") renderFolder(wrap);
+}
+
+/* ── DASHBOARD ── */
+function renderDash(wrap) {
+  const b = el("div", { style: { animation: "fadeUp .3s ease" } });
+  wrap.appendChild(b);
+
+  // Mic status
+  if (SpeechRecognitionAPI && !S.micReady) {
+    b.appendChild(el("div", { className: "mic-status", style: { background: "rgba(239,83,80,.08)", border: "1px solid rgba(239,83,80,.2)", color: "var(--rd)" } },
+      "\u{1F399}\uFE0F Microphone not connected. ",
+      el("button", { style: { background: "var(--rd)", color: "#fff", padding: "5px 14px", borderRadius: "6px", fontSize: "12px", marginLeft: "8px" }, onClick: initMic }, "Allow")
+    ));
+  } else if (S.micReady) {
+    b.appendChild(el("div", { className: "mic-status", style: { background: "rgba(76,175,128,.06)", border: "1px solid rgba(76,175,128,.15)", color: "var(--gn)" } },
+      "\u2705 Microphone connected"
+    ));
+  }
+
+  // Stats
+  const completedF = S.folders.filter(f => getReviewStep(f) >= 5).length;
+  const learnedF = S.folders.filter(f => getReviewStep(f) >= 1).length;
+  const needReview = S.folders.filter(f => { const s = getReviewStep(f); return s > 0 && s < 5 && isReviewAvailable(f); }).length;
+  b.appendChild(el("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "16px" } },
+    ...[
+      { v: learnedF + "/" + S.folders.length, l: "learned", c: "var(--ac2)" },
+      { v: completedF, l: "reinforced", c: "var(--gn)" },
+      { v: needReview, l: "to review", c: needReview > 0 ? "var(--rd)" : "var(--tx2)" }
+    ].map(s => el("div", { className: "sf", style: { padding: "14px", textAlign: "center" } },
+      el("div", { style: { fontSize: "24px", fontWeight: "800", color: s.c } }, String(s.v)),
+      el("div", { style: { fontSize: "11px", color: "var(--tx2)", marginTop: "3px" } }, s.l)
+    ))
+  ));
+
+  // Plan vs Actual tracker — count REAL progress per folder
+  // Each folder has 5 steps. Word is "done" = folder completed all 5 steps.
+  // Partial: step/5 of folder's words count as progress.
+  const wordsPerDay = 11;
+
+  // Calculate effective done words (weighted by review step)
+  let wordsDone = 0;       // fully reinforced (step 5)
+  let wordsPartial = 0;    // weighted partial progress
+  S.folders.forEach(f => {
+    const fw = getFolderWords(f);
+    const step = getReviewStep(f);
+    if (step >= 6) wordsDone += fw.length;
+    else wordsPartial += fw.length * (step / 6);
+  });
+  const wordsEffective = Math.round(wordsDone + wordsPartial);
+
+  // Week plan = 77, Month plan = 330
+  const weekPlan = 7 * wordsPerDay;
+  const monthPlan = 30 * wordsPerDay;
+  const weekPct = weekPlan > 0 ? Math.round((wordsEffective / weekPlan) * 100) : 0;
+  const monthPct = monthPlan > 0 ? Math.round((wordsEffective / monthPlan) * 100) : 0;
+
+  const trackerItems = [
+    { label: "Week", plan: weekPlan, fact: wordsEffective, pct: Math.min(weekPct, 150) },
+    { label: "Month", plan: monthPlan, fact: wordsEffective, pct: Math.min(monthPct, 150) }
+  ];
+
+  b.appendChild(el("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "14px" } },
+    ...trackerItems.map(t => {
+      const over = t.fact >= t.plan;
+      const barW = Math.min(100, t.pct);
+      return el("div", { className: "sf", style: { padding: "12px" } },
+        el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" } },
+          el("div", { style: { fontSize: "13px", fontWeight: "700", color: "var(--tx)" } }, t.label),
+          el("div", { style: { fontSize: "18px", fontWeight: "800", color: over ? "var(--gn)" : "var(--ac)" } }, t.pct + "%")
+        ),
+        el("div", { style: { height: "6px", background: "var(--sf3)", borderRadius: "3px", overflow: "hidden", marginBottom: "6px" } },
+          el("div", { style: { height: "100%", width: barW + "%", background: over ? "var(--gn)" : "linear-gradient(90deg,var(--ac),var(--ac2))", borderRadius: "3px", transition: "width .5s" } })
+        ),
+        el("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "12px" } },
+          el("span", { style: { color: "var(--ac2)" } }, t.fact + " done"),
+          el("span", { style: { color: "var(--tx2)" } }, "/ " + t.plan + " plan")
+        ),
+        over ? el("div", { style: { fontSize: "11px", color: "var(--gn)", fontWeight: "600", marginTop: "4px" } }, "+" + (t.fact - t.plan) + " ahead") : null
+      );
+    })
+  ));
+
+  // Folder list
+  S.folders.forEach(f => {
+    const fw = getFolderWords(f);
+    const step = getReviewStep(f);
+    const isComplete = step >= 6;
+    const available = isReviewAvailable(f);
+    const pct = Math.round((step / 6) * 100);
+    const nextDue = nextReviewDate(f);
+
+    // Status text
+    let statusText = "";
+    let statusColor = "var(--tx2)";
+    if (isComplete) { statusText = "\u2705 Reinforced"; statusColor = "var(--gn)"; }
+    else if (step === 0) { statusText = "\u{1F4D6} New"; statusColor = "var(--bl)"; }
+    else if (available) { statusText = REVIEW_STEPS[step].icon + " " + REVIEW_STEPS[step].label + " \u2014 now!"; statusColor = "var(--rd)"; }
+    else if (nextDue) { statusText = REVIEW_STEPS[step].icon + " " + REVIEW_STEPS[step].label + " \u2014 " + formatDate(nextDue.getTime()); statusColor = "var(--ac)"; }
+
+    // Step dots
+    const dots = el("div", { style: { display: "flex", gap: "4px", marginTop: "6px" } });
+    for (let i = 0; i < 6; i++) {
+      const done = f.reviews[i] !== null;
+      const current = i === step;
+      dots.appendChild(el("div", { style: {
+        width: "10px", height: "10px", borderRadius: "50%",
+        background: done ? "var(--gn)" : current && available ? "var(--rd)" : "var(--sf3)",
+        border: current ? "2px solid " + (available ? "var(--rd)" : "var(--ac)") : "none",
+        boxSizing: "border-box"
+      } }));
+    }
+
+    b.appendChild(el("div", {
+      className: "folder" + (isComplete ? " done" : ""),
+      style: available && step > 0 ? { borderColor: "var(--rd)" } : {},
+      onClick: () => { S.view = "folder"; S.folderId = f.id; S.cardIdx = 0; S.flipped = false; S.sub = "cards"; S.micScore = null; S.cardAnim = ""; S.shuffledIds = null; render(); }
+    },
+      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" } },
+        el("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+          el("span", { style: { fontSize: "15px", fontWeight: "700", color: isComplete ? "var(--gn)" : "var(--tx)" } }, "Day " + f.num)
+        ),
+        el("span", { style: { fontSize: "12px", color: statusColor, fontWeight: "600" } }, statusText)
+      ),
+      el("div", { style: { height: "5px", background: "var(--sf3)", borderRadius: "3px", overflow: "hidden" } },
+        el("div", { style: { height: "100%", borderRadius: "3px", background: isComplete ? "var(--gn)" : "linear-gradient(90deg,var(--ac),var(--ac2))", width: pct + "%", transition: "width .5s" } })
+      ),
+      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+        dots,
+        el("div", { style: { fontSize: "11px", color: "var(--tx2)" } }, fw.length + " words")
+      ),
+      el("div", { style: { marginTop: "4px", fontSize: "11px", color: "var(--tx2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
+        fw.map(w => w.en).join(" \u00B7 ")
+      )
+    ));
+  });
+}
+
+/* ── PLAN ── */
+function renderPlan(wrap) {
+  const b = el("div", { style: { animation: "fadeUp .3s ease" } });
+  wrap.appendChild(b);
+
+  b.appendChild(el("div", { style: { fontSize: "18px", fontWeight: "700", color: "var(--ac)", marginBottom: "4px" } }, "\u{1F4CB} Plan: 2700 words in 8 months"));
+  b.appendChild(el("div", { style: { fontSize: "12px", color: "var(--tx2)", marginBottom: "14px" } }, "April \u2014 December 2026 \u00B7 30 min/day \u00B7 11 words/day"));
+
+  // Calculate REAL progress (weighted by review steps)
+  const now = new Date();
+  const startDate = new Date(2026, 3, 4);
+  const daysPassed = Math.max(0, Math.floor((now - startDate) / 86400000));
+  const targetByNow = Math.min(2700, daysPassed * 11);
+
+  let wordsDone = 0, wordsPartial = 0;
+  S.folders.forEach(f => {
+    const fw = getFolderWords(f);
+    const step = getReviewStep(f);
+    if (step >= 6) wordsDone += fw.length;
+    else wordsPartial += fw.length * (step / 6);
+  });
+  const wordsEffective = Math.round(wordsDone + wordsPartial);
+  const pctTotal = Math.round((wordsEffective / 2700) * 100);
+
+  // Main progress card
+  b.appendChild(el("div", { className: "sf", style: { padding: "16px", marginBottom: "14px" } },
+    el("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: "8px" } },
+      el("div", { style: { fontSize: "28px", fontWeight: "800", color: "var(--ac2)" } }, wordsEffective + " / 2700"),
+      el("div", { style: { fontSize: "18px", fontWeight: "800", color: wordsEffective >= targetByNow ? "var(--gn)" : "var(--ac)", alignSelf: "flex-end" } }, pctTotal + "%")
+    ),
+    el("div", { style: { height: "8px", background: "var(--sf3)", borderRadius: "4px", overflow: "hidden", marginBottom: "8px" } },
+      el("div", { style: { height: "100%", width: Math.min(100, pctTotal) + "%", background: "linear-gradient(90deg,var(--ac),var(--ac2))", borderRadius: "4px", transition: "width .5s" } })
+    ),
+    el("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "12px", color: "var(--tx2)" } },
+      el("span", null, "Day " + daysPassed + " of 240"),
+      el("span", null, "Plan: " + targetByNow + " \u00B7 Fact: " + wordsEffective),
+      el("span", { style: { color: wordsEffective >= targetByNow ? "var(--gn)" : "var(--rd)", fontWeight: "600" } },
+        wordsEffective >= targetByNow
+          ? "\u2705 on track" + (wordsEffective > targetByNow ? " (+" + (wordsEffective - targetByNow) + ")" : "")
+          : "\u26A0\uFE0F -" + (targetByNow - wordsEffective) + " behind")
+    )
+  ));
+
+  // Week / Month plan-fact (same logic as dashboard)
+  const weekPlan = 7 * 11;
+  const monthPlan = 30 * 11;
+  const weekPct = weekPlan > 0 ? Math.round((wordsEffective / weekPlan) * 100) : 0;
+  const monthPct = monthPlan > 0 ? Math.round((wordsEffective / monthPlan) * 100) : 0;
+
+  b.appendChild(el("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "14px" } },
+    ...[
+      { label: "Week", plan: weekPlan, pct: weekPct },
+      { label: "Month", plan: monthPlan, pct: monthPct }
+    ].map(t => {
+      const over = wordsEffective >= t.plan;
+      return el("div", { className: "sf", style: { padding: "12px" } },
+        el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" } },
+          el("div", { style: { fontSize: "13px", fontWeight: "700", color: "var(--tx)" } }, t.label),
+          el("div", { style: { fontSize: "18px", fontWeight: "800", color: over ? "var(--gn)" : "var(--ac)" } }, Math.min(t.pct, 999) + "%")
+        ),
+        el("div", { style: { height: "6px", background: "var(--sf3)", borderRadius: "3px", overflow: "hidden", marginBottom: "6px" } },
+          el("div", { style: { height: "100%", width: Math.min(100, t.pct) + "%", background: over ? "var(--gn)" : "linear-gradient(90deg,var(--ac),var(--ac2))", borderRadius: "3px" } })
+        ),
+        el("div", { style: { display: "flex", justifyContent: "space-between", fontSize: "12px" } },
+          el("span", { style: { color: "var(--ac2)" } }, wordsEffective + " done"),
+          el("span", { style: { color: "var(--tx2)" } }, "/ " + t.plan + " plan")
+        ),
+        over ? el("div", { style: { fontSize: "11px", color: "var(--gn)", fontWeight: "600", marginTop: "4px" } }, "+" + (wordsEffective - t.plan) + " ahead") : null
+      );
+    })
+  ));
+
+  // Daily routine
+  b.appendChild(el("div", { style: { fontSize: "15px", fontWeight: "700", color: "var(--tx)", marginBottom: "8px" } }, "\u23F0 Your 30 minutes"));
+  const routine = [
+    { t: "5 min", d: "\u{1F3A7} Listen to new words (player 2x)", c: "var(--bl)" },
+    { t: "17 min", d: "\u{1F9E0} Learn 11 new words (cards + associations)", c: "var(--ac)" },
+    { t: "8 min", d: "\u{1F504} Review old folders (no spoilers)", c: "var(--ac2)" }
+  ];
+  routine.forEach(r => {
+    b.appendChild(el("div", { style: { display: "flex", gap: "10px", alignItems: "center", padding: "10px 14px", background: "var(--sf)", border: "1.5px solid var(--bd)", borderRadius: "10px", marginBottom: "6px" } },
+      el("div", { style: { fontSize: "13px", fontWeight: "700", color: r.c, minWidth: "55px" } }, r.t),
+      el("div", { style: { fontSize: "13px", color: "var(--tx)" } }, r.d)
+    ));
+  });
+
+  // Monthly breakdown
+  b.appendChild(el("div", { style: { fontSize: "15px", fontWeight: "700", color: "var(--tx)", margin: "16px 0 8px" } }, "\u{1F4C5} Monthly plan"));
+
+  const months = [
+    { m: "April", cat: "General English B2", words: 300, total: 300, start: new Date(2026,3,1) },
+    { m: "May", cat: "General English B2", words: 330, total: 630, start: new Date(2026,4,1) },
+    { m: "June", cat: "Startup + Business", words: 340, total: 970, start: new Date(2026,5,1) },
+    { m: "July", cat: "Tech + Product", words: 340, total: 1310, start: new Date(2026,6,1) },
+    { m: "August", cat: "Phrasal verbs", words: 340, total: 1650, start: new Date(2026,7,1) },
+    { m: "September", cat: "Conversational US", words: 340, total: 1990, start: new Date(2026,8,1) },
+    { m: "October", cat: "VC + Fundraising", words: 340, total: 2330, start: new Date(2026,9,1) },
+    { m: "Nov-Dec", cat: "Collocations + reinforcement", words: 370, total: 2700, start: new Date(2026,10,1) }
+  ];
+
+  months.forEach(m => {
+    const isCurrent = now.getMonth() === m.start.getMonth() && now.getFullYear() === m.start.getFullYear();
+    const mPct = m.total > 0 ? Math.round((wordsEffective / m.total) * 100) : 0;
+    const achieved = wordsEffective >= m.total;
+
+    b.appendChild(el("div", { style: {
+      padding: "12px 14px", background: isCurrent ? "rgba(240,192,64,.06)" : "var(--sf)",
+      border: "1.5px solid " + (isCurrent ? "var(--ac)" : achieved ? "var(--gn)" : "var(--bd)"),
+      borderRadius: "12px", marginBottom: "6px"
+    } },
+      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" } },
+        el("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+          el("span", { style: { fontSize: "14px" } }, achieved ? "\u2705" : isCurrent ? "\u{1F449}" : "\u{1F4C6}"),
+          el("span", { style: { fontSize: "14px", fontWeight: "700", color: isCurrent ? "var(--ac)" : achieved ? "var(--gn)" : "var(--tx)" } }, m.m)
+        ),
+        el("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+          el("span", { style: { fontSize: "12px", color: "var(--tx2)" } }, "+" + m.words + " \u2192 " + m.total),
+          el("span", { style: { fontSize: "13px", fontWeight: "800", color: achieved ? "var(--gn)" : "var(--tx2)" } }, Math.min(mPct, 100) + "%")
+        )
+      ),
+      el("div", { style: { fontSize: "12px", color: "var(--bl)", marginBottom: "4px" } }, m.cat),
+      el("div", { style: { height: "5px", background: "var(--sf3)", borderRadius: "3px", overflow: "hidden" } },
+        el("div", { style: { height: "100%", width: Math.min(100, mPct) + "%", background: achieved ? "var(--gn)" : "linear-gradient(90deg,var(--ac),var(--ac2))", borderRadius: "3px", transition: "width .5s" } })
+      )
+    ));
+  });
+
+  // Tips
+  b.appendChild(el("div", { style: { marginTop: "14px", padding: "14px", background: "rgba(240,192,64,.04)", border: "1px solid rgba(240,192,64,.12)", borderRadius: "12px" } },
+    el("div", { style: { fontSize: "13px", fontWeight: "700", color: "var(--ac)", marginBottom: "6px" } }, "\u{1F4A1} Yagodkin Method"),
+    el("div", { style: { fontSize: "12px", color: "var(--tx)", lineHeight: "1.6" } },
+      "1. Listen to words 2 times (player)\n2. Learn: word \u2192 IPA \u2192 \u{1F50A} \u2192 repeat 3x \u2192 association \u2192 flip\n3. Review: 2x same day, next day, 3 days, 7 days\n4. Don\u2019t say the translation \u2014 visualize the image!"
+    )
+  ));
+}
+
+/* ── GLOBAL PLAYER ── */
+function renderPlayer(wrap) {
+  const b = el("div", { style: { animation: "fadeUp .3s ease" } });
+  wrap.appendChild(b);
+
+  b.appendChild(el("div", { style: { fontSize: "18px", fontWeight: "700", color: "var(--ac)", marginBottom: "14px" } }, "\u{1F3A7} Player"));
+
+  // Speed + auto-next
+  b.appendChild(el("div", { style: { display: "flex", gap: "4px", marginBottom: "14px", flexWrap: "wrap", alignItems: "center" } },
+    el("span", { style: { fontSize: "12px", color: "var(--tx2)", marginRight: "6px" } }, "Speed:"),
+    ...[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => el("button", {
+      style: {
+        background: S.speed === s ? "rgba(240,192,64,.12)" : "transparent",
+        border: "1.5px solid " + (S.speed === s ? "var(--ac)" : "var(--bd)"),
+        color: S.speed === s ? "var(--ac)" : "var(--tx2)",
+        borderRadius: "6px", padding: "6px 12px", fontSize: "13px", minHeight: "40px"
+      },
+      onClick: () => { S.speed = s; render(); }
+    }, s + "x")),
+    el("label", { style: { display: "flex", alignItems: "center", gap: "6px", marginLeft: "10px", fontSize: "12px", color: "var(--tx2)", cursor: "pointer" } },
+      (() => { const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = S.autoNext; cb.addEventListener("change", () => { S.autoNext = !S.autoNext; render(); }); return cb; })(),
+      "Auto-next"
+    )
+  ));
+
+  // Folder list
+  S.folders.forEach((f, fi) => {
+    const fw = getFolderWords(f);
+    const isPlaying = S.playerFolderIdx === fi && S.playing;
+    const currentWord = isPlaying && fw[S.playerWordIdx] ? fw[S.playerWordIdx].en : "";
+
+    b.appendChild(el("div", {
+      style: {
+        display: "flex", alignItems: "center", gap: "10px", padding: "12px",
+        background: isPlaying ? "rgba(240,192,64,.06)" : "var(--sf)",
+        border: "1.5px solid " + (isPlaying ? "var(--ac)" : "var(--bd)"),
+        borderRadius: "12px", marginBottom: "8px"
+      }
+    },
+      el("button", {
+        className: "spk", style: { width: "46px", height: "46px", fontSize: "18px" },
+        onClick: () => isPlaying ? stopPlayer() : playFolder(fi, 0)
+      }, isPlaying ? "\u23F9" : "\u25B6"),
+      el("div", { style: { flex: "1", minWidth: 0 } },
+        el("div", { style: { fontSize: "14px", fontWeight: "600", color: isPlaying ? "var(--ac)" : "var(--tx)" } }, "Day " + f.num),
+        el("div", { style: { fontSize: "12px", color: "var(--tx2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
+          fw.length + " words" + (isPlaying ? " \u2014 " + currentWord + " (" + (S.playerWordIdx + 1) + "/" + fw.length + ")" : "")
+        )
+      )
+    ));
+  });
+}
+
+/* ── ADD WORDS ── */
+function renderAdd(wrap) {
+  const b = el("div", { style: { animation: "fadeUp .3s ease" } });
+  wrap.appendChild(b);
+
+  b.appendChild(el("div", { style: { fontSize: "18px", fontWeight: "700", color: "var(--ac)", marginBottom: "14px" } }, "+ Add"));
+
+  const ta = el("textarea", {
+    className: "ta",
+    placeholder: "apple\nword_translation\nhouse\nword_translation\n\nor: apple \u2014 word_translation",
+    onInput: (e) => { S.addText = e.target.value; }
+  });
+  ta.value = S.addText;
+  b.appendChild(ta);
+
+  b.appendChild(el("div", { style: { display: "flex", gap: "8px", marginTop: "12px" } },
+    el("button", {
+      style: { flex: "1", padding: "14px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", background: "var(--ac)", color: "#000" },
+      onClick: () => {
+        const parsed = parseWords(S.addText);
+        if (parsed.length) {
+          const existing = new Set(S.words.map(w => normalize(w.en)));
+          S.addPreview = parsed.map(w => ({
+            ...w,
+            dup: existing.has(normalize(w.en))
+          }));
+        }
+        render();
+      }
+    }, "\u{1F50D} Preview"),
+    el("button", {
+      style: { padding: "14px 20px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", background: "var(--sf2)", color: "var(--tx)", border: "1.5px solid var(--bd)" },
+      onClick: () => {
+        const blob = new Blob([JSON.stringify({ words: S.words, folders: S.folders }, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "yagodkin-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+        a.click();
+      }
+    }, "\u{1F4BE} Backup")
+  ));
+
+  // Preview
+  if (S.addPreview) {
+    const newWords = S.addPreview.filter(w => !w.dup);
+    b.appendChild(el("div", { style: { marginTop: "14px", padding: "14px", background: "var(--sf)", border: "1.5px solid var(--bd)", borderRadius: "12px" } },
+      el("div", { style: { fontSize: "14px", fontWeight: "600", marginBottom: "8px" } },
+        "Found: " + S.addPreview.length + " | New: " + newWords.length + " | Duplicates: " + (S.addPreview.length - newWords.length)
+      ),
+      ...S.addPreview.map(w => el("div", {
+        style: { fontSize: "13px", padding: "4px 0", color: w.dup ? "var(--rd)" : "var(--tx)", opacity: w.dup ? 0.5 : 1 }
+      }, (w.dup ? "\u274C " : "\u2705 ") + w.en + " \u2014 " + w.ru)),
+      newWords.length > 0 ? el("button", {
+        style: { marginTop: "10px", padding: "12px", width: "100%", borderRadius: "10px", fontSize: "15px", fontWeight: "600", background: "var(--ac2)", color: "#000" },
+        onClick: () => {
+          const n = addWords(S.addPreview.filter(w => !w.dup));
+          S.addText = "";
+          S.addPreview = null;
+          render();
+          alert("Added: " + n + " words");
+        }
+      }, "\u2795 Add " + newWords.length + " words") : null
+    ));
+  }
+
+  // JSON Import from Claude
+  b.appendChild(el("div", { style: { marginTop: "16px", padding: "14px", background: "var(--sf)", border: "1.5px solid var(--bd)", borderRadius: "12px" } },
+    el("div", { style: { fontSize: "14px", fontWeight: "700", color: "var(--ac)", marginBottom: "8px" } }, "\u{1F4E5} Import from Claude"),
+    el("div", { style: { fontSize: "12px", color: "var(--tx2)", marginBottom: "8px" } }, "Paste JSON from Claude:"),
+    (() => {
+      const ta = el("textarea", {
+        className: "ta", style: { minHeight: "80px", fontSize: "12px" },
+        placeholder: '[{"en":"word","ru":"\u043F\u0435\u0440\u0435\u0432\u043E\u0434","ipa":"/w\u025Crd/","say":"\u0412\u042D\u0420\u0414","a":"\u0430\u0441\u0441\u043E\u0446\u0438\u0430\u0446\u0438\u044F"}]'
+      });
+      return ta;
+    })(),
+    el("button", {
+      style: { marginTop: "8px", padding: "10px", width: "100%", borderRadius: "8px", fontSize: "14px", fontWeight: "600", background: "var(--bl)", color: "#fff" },
+      onClick: (e) => {
+        const ta = e.target.parentNode.querySelector("textarea");
+        try {
+          const data = JSON.parse(ta.value);
+          if (!Array.isArray(data)) throw new Error("not array");
+          const existing = new Set(S.words.map(w => normalize(w.en)));
+          let added = 0, maxId = S.words.reduce((m, w) => Math.max(m, w.id), -1);
+          data.forEach(w => {
+            if (!w.en) return;
+            const n = normalize(w.en);
+            if (existing.has(n)) return;
+            existing.add(n); maxId++;
+            S.words.push({ en: w.en, ru: w.ru || "", ipa: w.ipa || "", say: w.say || "", a: w.a || "", id: maxId, step: 0, nr: 0, kn: false });
+            added++;
+          });
+          S.folders = buildFolders(S.words); save();
+          ta.value = "";
+          render();
+          alert("Added: " + added + " words");
+        } catch (err) { alert("JSON error: " + err.message); }
+      }
+    }, "\u{1F4E5} Import")
+  ));
+
+  // Reset button
+  b.appendChild(el("div", { style: { marginTop: "20px", textAlign: "center" } },
+    el("button", {
+      style: { padding: "10px 20px", borderRadius: "8px", fontSize: "13px", color: "var(--rd)", background: "transparent", border: "1px solid rgba(239,83,80,.2)" },
+      onClick: () => {
+        if (confirm("Reset all data? This will delete all words and progress.")) {
+          localStorage.removeItem(STORAGE_KEY);
+          initDefaults();
+          save();
+          S.addText = "";
+          S.addPreview = null;
+          render();
+        }
+      }
+    }, "\u{1F5D1}\uFE0F Reset")
+  ));
+}
+
+/* ── FOLDER VIEW ── */
+function renderFolder(wrap) {
+  const f = getCurrentFolder();
+  if (!f) { S.view = "dash"; render(); return; }
+  const fw = getFolderWords(f);
+  const b = el("div", { style: { animation: "fadeUp .3s ease" } });
+  wrap.appendChild(b);
+
+  // Header + Review steps
+  const step = getReviewStep(f);
+  const isComplete = step >= 5;
+  const available = isReviewAvailable(f);
+
+  b.appendChild(el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" } },
+    el("div", null,
+      el("div", { style: { fontSize: "18px", fontWeight: "700", color: "var(--ac)" } }, "Day " + f.num),
+      el("div", { style: { fontSize: "12px", color: "var(--tx2)" } }, fw.length + " words")
+    ),
+    isComplete
+      ? el("div", { style: { fontSize: "13px", color: "var(--gn)", fontWeight: "700" } }, "\u2705 Reinforced!")
+      : available
+        ? el("button", {
+            style: { padding: "10px 16px", borderRadius: "10px", background: step === 0 ? "var(--ac)" : "var(--rd)", color: step === 0 ? "#000" : "#fff", fontSize: "13px", fontWeight: "700" },
+            onClick: () => { f.reviews[step] = Date.now(); save(); render(); }
+          }, REVIEW_STEPS[step].icon + " " + REVIEW_STEPS[step].label)
+        : el("div", { style: { fontSize: "12px", color: "var(--ac)", fontWeight: "600" } },
+            REVIEW_STEPS[step].icon + " " + REVIEW_STEPS[step].label + " \u2014 " + formatDate(nextReviewDate(f)?.getTime()))
+  ));
+
+  // Review progress bar
+  const stepsBar = el("div", { style: { display: "flex", gap: "4px", marginBottom: "12px" } });
+  REVIEW_STEPS.forEach((rs, i) => {
+    const done = f.reviews[i] !== null;
+    const current = i === step;
+    stepsBar.appendChild(el("div", { style: {
+      flex: "1", textAlign: "center", padding: "6px 2px", borderRadius: "6px", fontSize: "11px", fontWeight: "600",
+      background: done ? "rgba(76,175,128,.12)" : current && available ? "rgba(239,83,80,.1)" : "var(--sf2)",
+      color: done ? "var(--gn)" : current && available ? "var(--rd)" : "var(--tx2)",
+      border: "1px solid " + (done ? "rgba(76,175,128,.2)" : current ? (available ? "rgba(239,83,80,.3)" : "rgba(240,192,64,.2)") : "var(--bd)")
+    } },
+      done ? "\u2705" : rs.icon,
+      el("div", { style: { fontSize: "9px", marginTop: "2px" } }, rs.label),
+      done ? el("div", { style: { fontSize: "9px", color: "var(--tx2)" } }, formatDate(f.reviews[i])) : null
+    ));
+  });
+  b.appendChild(stepsBar);
+
+  // Direction + sub-mode toggles
+  b.appendChild(el("div", { style: { display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" } },
+    el("div", { className: "toggle", style: { flex: "1" } },
+      el("button", { className: S.direction === "ru" ? "on" : "", onClick: () => { S.direction = "ru"; S.flipped = false; render(); } }, "\u{1F1F7}\u{1F1FA}\u2192\u{1F1EC}\u{1F1E7}"),
+      el("button", { className: S.direction === "en" ? "on" : "", onClick: () => { S.direction = "en"; S.flipped = false; render(); } }, "\u{1F1EC}\u{1F1E7}\u2192\u{1F1F7}\u{1F1FA}")
+    ),
+    el("div", { className: "toggle", style: { flex: "1.5" } },
+      el("button", { className: S.sub === "cards" ? "on" : "", onClick: () => { S.sub = "cards"; render(); } }, "\u{1F9E0}"),
+      el("button", { className: S.sub === "review" ? "on" : "", onClick: () => { S.sub = "review"; S.cardIdx = 0; S.flipped = false; render(); } }, "\u{1F504}"),
+      el("button", { className: S.sub === "dictation" ? "on" : "", onClick: () => { S.sub = "dictation"; S.dictInput = ""; S.dictResult = null; render(); } }, "\u270D\uFE0F"),
+      el("button", { className: S.sub === "list" ? "on" : "", onClick: () => { S.sub = "list"; render(); } }, "\u{1F4DD}")
+    )
+  ));
+
+  // Folder player bar
+  const fIdx = S.folders.indexOf(f);
+  const isPlaying = S.playerFolderIdx === fIdx && S.playing;
+  b.appendChild(el("div", { className: "pbar", style: { marginBottom: "14px" } },
+    el("button", {
+      className: "spk", style: { width: "40px", height: "40px", fontSize: "16px" },
+      onClick: () => isPlaying ? stopPlayer() : playFolder(fIdx, 0)
+    }, isPlaying ? "\u23F9" : "\u25B6"),
+    el("div", { style: { flex: "1", fontSize: "13px", color: "var(--tx2)" } },
+      isPlaying ? fw[S.playerWordIdx]?.en + " (" + (S.playerWordIdx + 1) + "/" + fw.length + ")" : "Play all " + fw.length + " words"
+    ),
+    el("select", {
+      style: { background: "var(--sf2)", color: "var(--ac)", border: "1px solid var(--bd)", borderRadius: "6px", padding: "4px 8px", fontSize: "12px" },
+      onChange: (e) => { S.speed = parseFloat(e.target.value); }
+    }, ...[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => {
+      const opt = el("option", { value: String(s) }, s + "x");
+      if (S.speed === s) opt.selected = true;
+      return opt;
+    }))
+  ));
+
+  // Tutor audio section
+  if (TUTOR_AUDIO.length) {
+    const tutorBox = el("div", { style: { marginBottom: "14px" } });
+    tutorBox.appendChild(el("div", { style: { fontSize: "12px", color: "var(--tx2)", fontWeight: "600", marginBottom: "6px" } }, "\u{1F3A7} Tutor audio"));
+    TUTOR_AUDIO.forEach(ta => {
+      const audioEl = el("div", { className: "tutor-audio" },
+        el("div", { style: { fontSize: "13px", color: "var(--bl)", flex: "1" } }, ta.label),
+        el("audio", { controls: "controls", style: { height: "36px", flex: "2" } },
+          el("source", { src: encodeURI(ta.file), type: "audio/mpeg" })
+        )
+      );
+      tutorBox.appendChild(audioEl);
+    });
+    b.appendChild(tutorBox);
+  }
+
+  if (S.sub === "cards") renderCards(b, fw);
+  else if (S.sub === "review") renderReview(b, fw);
+  else if (S.sub === "dictation") renderDictation(b, fw);
+  else if (S.sub === "list") renderList(b, fw);
+}
+
+/* ── CARDS ── */
+// Helper: render association(s) — supports string or array of 3
+function renderAssoc(w) {
+  if (!w.a) return null;
+  const assocs = Array.isArray(w.a) ? w.a : [w.a];
+  return el("div", { className: "assoc" },
+    el("div", { style: { fontSize: "10px", color: "var(--ac)", fontWeight: "600", marginBottom: "4px" } }, "\u{1F4A1} Association"),
+    ...assocs.map((a, i) => el("div", { style: { fontSize: "12px", color: assocs.length > 1 ? (i === 0 ? "var(--tx)" : "var(--tx2)") : "var(--tx)", lineHeight: "1.4", marginBottom: assocs.length > 1 ? "4px" : "0", paddingLeft: assocs.length > 1 ? "0" : "0" } },
+      assocs.length > 1 ? el("span", { style: { color: "var(--ac)", fontWeight: "700", fontSize: "11px" } }, (i + 1) + ". ") : null,
+      a
+    ))
+  );
+}
+
+function renderCards(parent, fw) {
+  if (!fw.length) return;
+  const w = fw[S.cardIdx] || fw[0];
+  const isBack = S.flipped;
+
+  const cardEl = el("div", {
+    className: "card" + (isBack ? " back" : "") + (S.cardAnim ? " " + S.cardAnim : ""),
+    onClick: () => {
+      S.flipped = !S.flipped;
+      S.cardAnim = "animFlip";
+      render();
+      setTimeout(() => { S.cardAnim = ""; }, 400);
+    },
+    onAnimationend: () => { S.cardAnim = ""; }
+  });
+
+  if (S.direction === "ru") {
+    // RU→EN mode
+    if (!isBack) {
+      // Front: Russian word
+      cardEl.appendChild(el("div", { style: { fontSize: "12px", color: "var(--tx2)", marginBottom: "8px" } }, "Translate \u2192"));
+      cardEl.appendChild(el("div", { style: { fontSize: "32px", fontWeight: "800", textAlign: "center" } }, w.ru));
+    } else {
+      // Back: English + IPA + transcription + speaker + association
+      cardEl.appendChild(el("div", { style: { fontSize: "34px", fontWeight: "800", color: "var(--ac2)", textAlign: "center" } }, w.en));
+      if (w.ipa) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--tx2)", marginTop: "4px" } }, w.ipa));
+      if (w.say) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)", marginTop: "2px" } }, "[" + w.say + "]"));
+      cardEl.appendChild(el("div", { style: { marginTop: "10px" } },
+        el("button", { className: "spk", onClick: (e) => { e.stopPropagation(); speak(w.en); } }, "\u{1F50A}")
+      ));
+      { const ac = renderAssoc(w); if (ac) cardEl.appendChild(ac); }
+    }
+  } else {
+    // EN→RU mode
+    if (!isBack) {
+      // Front: English + IPA + speaker
+      cardEl.appendChild(el("div", { style: { fontSize: "34px", fontWeight: "800", textAlign: "center" } }, w.en));
+      if (w.ipa) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--tx2)", marginTop: "4px" } }, w.ipa));
+      if (w.say) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)", marginTop: "2px" } }, "[" + w.say + "]"));
+      cardEl.appendChild(el("div", { style: { marginTop: "10px" } },
+        el("button", { className: "spk", onClick: (e) => { e.stopPropagation(); speak(w.en); } }, "\u{1F50A}")
+      ));
+    } else {
+      // Back: Russian translation + association
+      cardEl.appendChild(el("div", { style: { fontSize: "30px", fontWeight: "800", color: "var(--ac2)", textAlign: "center" } }, w.ru));
+      if (w.say) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)", marginTop: "4px" } }, "[" + w.say + "]"));
+      cardEl.appendChild(el("div", { style: { marginTop: "10px" } },
+        el("button", { className: "spk", onClick: (e) => { e.stopPropagation(); speak(w.en); } }, "\u{1F50A}")
+      ));
+      { const ac = renderAssoc(w); if (ac) cardEl.appendChild(ac); }
+    }
+  }
+
+  parent.appendChild(cardEl);
+
+  // Setup swipe on card
+  setupSwipe(cardEl,
+    () => { if (S.cardIdx < fw.length - 1) { S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; S.micScore = null; S.hasRecording = false; render(); } },
+    () => { if (S.cardIdx > 0) { S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; S.micScore = null; S.hasRecording = false; render(); } }
+  );
+
+  // Navigation arrows + counter
+  parent.appendChild(el("div", { className: "nav-arrows" },
+    el("button", {
+      className: "arrow",
+      onClick: () => { if (S.cardIdx > 0) { S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; S.micScore = null; S.hasRecording = false; render(); } }
+    }, "\u25C0"),
+    el("div", { className: "counter" }, (S.cardIdx + 1) + " / " + fw.length),
+    el("button", {
+      className: "arrow",
+      onClick: () => { if (S.cardIdx < fw.length - 1) { S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; S.micScore = null; S.hasRecording = false; render(); } }
+    }, "\u25B6")
+  ));
+
+  // Pronunciation section: Speech Recognition + Record & Compare
+  const pronContainer = el("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginTop: "8px" } });
+
+  // Row 1: Speech recognition (if available) + transcription hint
+  if (SpeechRecognitionAPI) {
+    const micRow = el("div", { style: { display: "flex", alignItems: "center", gap: "14px" } });
+    micRow.appendChild(el("button", {
+      className: "mic" + (S.micListening ? " on" : (S.micScore !== null && S.micScore >= 85 ? " ok" : "")),
+      onClick: () => {
+        if (!S.micReady) { initMic().then(() => startMic(w.en)); }
+        else startMic(w.en);
+      }
+    }, S.micListening ? "\u{1F534}" : "\u{1F399}\uFE0F"));
+    if (w.say) {
+      micRow.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)" } }, "[" + w.say + "]"));
+    }
+    pronContainer.appendChild(micRow);
+
+    // Score display with letter-by-letter comparison
+    if (S.micScore !== null) {
+      const sc = S.micScore;
+      const scoreBox = el("div", { style: { textAlign: "center" } });
+
+      // Score number + bar
+      scoreBox.appendChild(el("div", { style: { fontSize: "28px", fontWeight: "800", color: scoreColor(sc) } }, sc + "%"));
+      scoreBox.appendChild(el("div", { style: { height: "8px", width: "200px", background: "var(--sf3)", borderRadius: "4px", overflow: "hidden", margin: "6px auto" } },
+        el("div", { style: { height: "100%", width: sc + "%", background: scoreColor(sc), borderRadius: "4px", transition: "width .3s" } })
+      ));
+
+      // "You said" text
+      scoreBox.appendChild(el("div", { style: { fontSize: "13px", color: "var(--tx2)", marginTop: "6px" } },
+        "You said: \u00AB" + S.micHeard + "\u00BB"
+      ));
+
+      // Letter-by-letter comparison
+      const heard = (S.micHeard || "").toLowerCase();
+      const target = w.en.toLowerCase();
+      const letterBox = el("div", { style: { display: "flex", justifyContent: "center", gap: "2px", marginTop: "10px", flexWrap: "wrap" } });
+
+      for (let i = 0; i < target.length; i++) {
+        const match = i < heard.length && heard[i] === target[i];
+        const partial = i < heard.length;
+        letterBox.appendChild(el("div", { style: {
+          width: "28px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center",
+          borderRadius: "6px", fontSize: "18px", fontWeight: "700", fontFamily: "monospace",
+          background: match ? "rgba(76,175,128,.15)" : partial ? "rgba(239,83,80,.15)" : "rgba(110,108,120,.1)",
+          color: match ? "var(--gn)" : partial ? "var(--rd)" : "var(--tx2)",
+          border: "1.5px solid " + (match ? "var(--gn)" : partial ? "var(--rd)" : "var(--bd)")
+        } }, target[i]));
+      }
+      scoreBox.appendChild(letterBox);
+
+      // Legend
+      scoreBox.appendChild(el("div", { style: { display: "flex", justifyContent: "center", gap: "14px", marginTop: "8px", fontSize: "11px" } },
+        el("span", { style: { color: "var(--gn)" } }, "\u25CF matched"),
+        el("span", { style: { color: "var(--rd)" } }, "\u25CF didn't match"),
+        el("span", { style: { color: "var(--tx2)" } }, "\u25CF skipped")
+      ));
+
+      // Slow playback button
+      scoreBox.appendChild(el("div", { style: { marginTop: "10px" } },
+        el("button", {
+          style: { padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", background: "var(--sf2)", color: "var(--bl)", border: "1.5px solid rgba(92,142,230,.3)" },
+          onClick: (e) => { e.stopPropagation(); speakWord(w.en, 0.5); }
+        }, "\u{1F40C} Listen slowly")
+      ));
+
+      // Tip based on score
+      if (sc >= 85) {
+        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--gn)", fontWeight: "600" } }, "\u2705 Excellent!"));
+      } else if (sc >= 55) {
+        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--ac)" } }, "\u{1F4A1} Listen slowly and repeat"));
+      } else {
+        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--rd)" } }, "\u{1F50A} Listen to reference, note the red letters"));
+      }
+
+      pronContainer.appendChild(scoreBox);
+    }
+  }
+
+  // Row 2: Record & Compare with tutor
+  pronContainer.appendChild(el("div", { style: { width: "100%", height: "1px", background: "var(--bd)", margin: "6px 0" } }));
+  pronContainer.appendChild(el("div", { style: { fontSize: "12px", color: "var(--tx2)", fontWeight: "600" } }, "\u{1F3A4} Record & compare"));
+
+  const recRow = el("div", { style: { display: "flex", alignItems: "center", gap: "12px" } });
+
+  // Record button
+  recRow.appendChild(el("button", {
+    className: "rec" + (S.recording ? " on" : ""),
+    onClick: () => { S.recording ? stopRecording() : startRecording(); }
+  }, S.recording ? "\u23F9" : "\u{1F534}"));
+
+  // Play tutor (TTS) button
+  recRow.appendChild(el("button", {
+    className: "spk", style: { width: "48px", height: "48px" },
+    onClick: (e) => { e.stopPropagation(); speak(w.en); }
+  }, "\u{1F50A}"));
+
+  // Play recording button (if available)
+  if (S.hasRecording && recordedUrl) {
+    recRow.appendChild(el("button", {
+      className: "play-rec",
+      onClick: (e) => { e.stopPropagation(); playRecording(); }
+    }, "\u{1F3A7}"));
+  }
+
+  pronContainer.appendChild(recRow);
+
+  if (S.recording) {
+    pronContainer.appendChild(el("div", { style: { fontSize: "13px", color: "#e040fb", fontWeight: "600" } }, "\u25CF Recording... press \u23F9 to stop"));
+  } else if (S.hasRecording) {
+    pronContainer.appendChild(el("div", { style: { fontSize: "12px", color: "var(--tx2)" } },
+      "\u{1F50A} = tutor \u00A0\u00A0 \u{1F3A7} = your recording \u00A0\u00A0 Compare!"
+    ));
+  }
+
+  parent.appendChild(pronContainer);
+}
+
+/* ── REVIEW (clean cards, no spoilers) ── */
+function getReviewWords(fw) {
+  if (!S.shuffledIds) return fw;
+  return S.shuffledIds.map(id => fw.find(w => w.id === id)).filter(Boolean);
+}
+
+function shuffleWords(fw) {
+  const ids = fw.map(w => w.id);
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+  S.shuffledIds = ids;
+  S.cardIdx = 0;
+  S.flipped = false;
+  render();
+}
+
+function renderReview(parent, fw) {
+  if (!fw.length) return;
+  const rw = getReviewWords(fw);
+  const w = rw[S.cardIdx] || rw[0];
+  const isBack = S.flipped;
+
+  // Header: label + shuffle button
+  parent.appendChild(el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" } },
+    el("div", { style: { fontSize: "12px", color: "var(--tx2)" } },
+      "\u{1F504} Review \u2014 tap card to check"),
+    el("button", {
+      style: {
+        padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "600",
+        background: S.shuffledIds ? "rgba(240,192,64,.12)" : "var(--sf2)",
+        color: S.shuffledIds ? "var(--ac)" : "var(--tx2)",
+        border: "1.5px solid " + (S.shuffledIds ? "var(--ac)" : "var(--bd)")
+      },
+      onClick: () => { if (S.shuffledIds) { S.shuffledIds = null; S.cardIdx = 0; S.flipped = false; render(); } else { shuffleWords(fw); } }
+    }, S.shuffledIds ? "\u{1F500} Shuffled" : "\u{1F500} Shuffle")
+  ));
+
+  const cardEl = el("div", {
+    className: "card" + (isBack ? " back" : "") + (S.cardAnim ? " " + S.cardAnim : ""),
+    onClick: () => {
+      S.flipped = !S.flipped;
+      S.cardAnim = "animFlip";
+      render();
+      setTimeout(() => { S.cardAnim = ""; }, 400);
+    }
+  });
+
+  if (S.direction === "ru") {
+    if (!isBack) {
+      // Front: ONLY Russian word
+      cardEl.appendChild(el("div", { style: { fontSize: "14px", color: "var(--tx2)", marginBottom: "10px" } }, "Translate \u2192"));
+      cardEl.appendChild(el("div", { style: { fontSize: "34px", fontWeight: "800", textAlign: "center" } }, w.ru));
+    } else {
+      // Back: English word + IPA + Russian transcription
+      cardEl.appendChild(el("div", { style: { fontSize: "36px", fontWeight: "800", color: "var(--ac2)", textAlign: "center" } }, w.en));
+      if (w.ipa) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--tx2)", marginTop: "4px" } }, w.ipa));
+      if (w.say) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)", marginTop: "2px" } }, "[" + w.say + "]"));
+    }
+  } else {
+    if (!isBack) {
+      // Front: ONLY English word (no hints)
+      cardEl.appendChild(el("div", { style: { fontSize: "14px", color: "var(--tx2)", marginBottom: "10px" } }, "Translate \u2192"));
+      cardEl.appendChild(el("div", { style: { fontSize: "36px", fontWeight: "800", textAlign: "center" } }, w.en));
+    } else {
+      // Back: Russian word + IPA + Russian transcription
+      cardEl.appendChild(el("div", { style: { fontSize: "36px", fontWeight: "800", color: "var(--ac2)", textAlign: "center" } }, w.ru));
+      if (w.ipa) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--tx2)", marginTop: "4px" } }, w.ipa));
+      if (w.say) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)", marginTop: "2px" } }, "[" + w.say + "]"));
+    }
+  }
+
+  parent.appendChild(cardEl);
+
+  // Swipe
+  setupSwipe(cardEl,
+    () => { if (S.cardIdx < rw.length - 1) { S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; render(); } },
+    () => { if (S.cardIdx > 0) { S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; render(); } }
+  );
+
+  // Arrows
+  parent.appendChild(el("div", { className: "nav-arrows" },
+    el("button", { className: "arrow", onClick: () => { if (S.cardIdx > 0) { S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; render(); } } }, "\u25C0"),
+    el("div", { className: "counter" }, (S.cardIdx + 1) + " / " + rw.length),
+    el("button", { className: "arrow", onClick: () => { if (S.cardIdx < rw.length - 1) { S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; render(); } } }, "\u25B6")
+  ));
+}
+
+/* ── DICTATION ── */
+function renderDictation(parent, fw) {
+  if (!fw.length) return;
+  const w = fw[S.cardIdx] || fw[0];
+
+  const container = el("div", { style: { textAlign: "center" } });
+
+  if (S.direction === "ru") {
+    // Show Russian, type English
+    container.appendChild(el("div", { style: { fontSize: "28px", fontWeight: "800", marginBottom: "14px" } }, w.ru));
+    container.appendChild(el("div", { style: { marginBottom: "14px" } },
+      el("button", { className: "spk", onClick: () => speak(w.en) }, "\u{1F50A}")
+    ));
+    container.appendChild(el("div", { style: { fontSize: "13px", color: "var(--tx2)", marginBottom: "10px" } }, "Type in English"));
+  } else {
+    // Only audio, type what you hear
+    container.appendChild(el("div", { style: { fontSize: "14px", color: "var(--tx2)", marginBottom: "14px" } }, "Listen and type"));
+    container.appendChild(el("div", { style: { marginBottom: "14px" } },
+      el("button", { className: "spk", style: { width: "64px", height: "64px", fontSize: "28px" }, onClick: () => speak(w.en) }, "\u{1F50A}")
+    ));
+  }
+
+  const input = el("input", {
+    className: "ti" + (S.dictResult === true ? " ok" : S.dictResult === false ? " no" : ""),
+    type: "text",
+    placeholder: "...",
+    value: S.dictInput,
+    onInput: (e) => { S.dictInput = e.target.value; },
+    onKeydown: (e) => { if (e.key === "Enter") checkDictation(w); }
+  });
+  container.appendChild(input);
+
+  container.appendChild(el("div", { style: { display: "flex", gap: "8px", marginTop: "12px", justifyContent: "center" } },
+    el("button", {
+      style: { padding: "12px 24px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", background: "var(--ac)", color: "#000" },
+      onClick: () => checkDictation(w)
+    }, "Check"),
+    el("button", {
+      style: { padding: "12px 24px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", background: "var(--sf2)", color: "var(--tx)", border: "1.5px solid var(--bd)" },
+      onClick: () => { nextDictCard(fw); }
+    }, "Next \u25B6")
+  ));
+
+  // Result
+  if (S.dictResult !== null) {
+    if (S.dictResult) {
+      container.appendChild(el("div", { style: { marginTop: "14px", padding: "12px", background: "rgba(76,175,128,.08)", border: "1px solid rgba(76,175,128,.2)", borderRadius: "10px", color: "var(--gn)", fontSize: "16px", fontWeight: "600" } },
+        "\u2713 Correct!"
+      ));
+    } else {
+      container.appendChild(el("div", { style: { marginTop: "14px", padding: "12px", background: "rgba(239,83,80,.08)", border: "1px solid rgba(239,83,80,.2)", borderRadius: "10px" } },
+        el("div", { style: { color: "var(--rd)", fontSize: "14px", fontWeight: "600" } }, "\u2717 Correct answer:"),
+        el("div", { style: { fontSize: "22px", fontWeight: "800", color: "var(--ac2)", marginTop: "4px" } }, w.en),
+        w.ipa ? el("div", { style: { fontSize: "14px", color: "var(--tx2)", marginTop: "2px" } }, w.ipa) : null
+      ));
+    }
+  }
+
+  parent.appendChild(container);
+
+  // Auto-focus input
+  setTimeout(() => input.focus(), 100);
+}
+
+function checkDictation(w) {
+  const input = normalize(S.dictInput);
+  const target = normalize(w.en);
+  S.dictResult = input === target;
+  S.dictAnswer = w.en;
+  render();
+}
+
+function nextDictCard(fw) {
+  if (S.cardIdx < fw.length - 1) S.cardIdx++;
+  else S.cardIdx = 0;
+  S.dictInput = "";
+  S.dictResult = null;
+  render();
+}
+
+/* ── WORD LIST ── */
+function renderList(parent, fw) {
+  const table = el("div", { className: "sf" });
+
+  // Header
+  table.appendChild(el("div", { className: "word-row", style: { background: "var(--sf2)", fontWeight: "600", fontSize: "12px", color: "var(--tx2)" } },
+    el("div", null, "#"),
+    el("div", null, "English"),
+    el("div", null, "Russian"),
+    el("div", null, "\u{1F50A}")
+  ));
+
+  fw.forEach((w, i) => {
+    const row = el("div", null);
+    row.appendChild(el("div", { className: "word-row" },
+      el("div", { style: { color: "var(--tx2)", fontSize: "12px" } }, String(i + 1)),
+      el("div", null,
+        el("div", { style: { fontWeight: "600" } }, w.en),
+        w.ipa ? el("div", { style: { fontSize: "12px", color: "var(--tx2)" } }, w.ipa) : null,
+        w.say ? el("div", { style: { fontSize: "12px", color: "var(--bl)" } }, "[" + w.say + "]") : null
+      ),
+      el("div", { style: { fontSize: "13px" } }, w.ru),
+      el("div", null,
+        el("button", {
+          style: { background: "none", border: "none", fontSize: "18px", padding: "4px", cursor: "pointer" },
+          onClick: () => speak(w.en)
+        }, "\u{1F50A}")
+      )
+    ));
+    if (w.a) {
+      const assocs = Array.isArray(w.a) ? w.a : [w.a];
+      row.appendChild(el("div", { style: { padding: "0 14px 10px 38px", fontSize: "11px", color: "var(--ac)", lineHeight: "1.4", borderBottom: "1px solid var(--bd)" } },
+        ...assocs.map((a, i) => el("div", { style: { color: i === 0 ? "var(--ac)" : "var(--tx2)", marginBottom: "2px" } },
+          assocs.length > 1 ? (i + 1) + ". " + a : "\u{1F4A1} " + a
+        ))
+      ));
+    }
+    table.appendChild(row);
+  });
+
+  parent.appendChild(table);
+}
+
+/* ═══════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+   ═══════════════════════════════════════════ */
+document.addEventListener("keydown", (e) => {
+  if (S.view !== "folder" || (S.sub !== "cards" && S.sub !== "review")) return;
+  const f = getCurrentFolder();
+  if (!f) return;
+  const fw = getFolderWords(f);
+
+  if (e.key === "ArrowLeft" && S.cardIdx > 0) {
+    S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; S.micScore = null; S.hasRecording = false; render();
+  } else if (e.key === "ArrowRight" && S.cardIdx < fw.length - 1) {
+    S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; S.micScore = null; S.hasRecording = false; render();
+  } else if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    S.flipped = !S.flipped; S.cardAnim = "animFlip"; render();
+    setTimeout(() => { S.cardAnim = ""; }, 400);
+  }
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════ */
+load();
+save();
+render();
+
+// Try to init mic on first user gesture
+document.addEventListener("click", function initOnce() {
+  if (!S.micReady && SpeechRecognitionAPI) {
+    initMic();
+  }
+  document.removeEventListener("click", initOnce);
+}, { once: true });
+</script>
+</body>
+</html>
