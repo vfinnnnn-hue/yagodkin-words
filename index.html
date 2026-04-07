@@ -276,6 +276,9 @@ const S = {
   hasRecording: false,
   // Shuffle state
   shuffledIds: null,  // null = not shuffled, array = shuffled order
+  // Not Yet (growth mindset)
+  notYet: [],          // array of word IDs
+  lastWeeklyReview: null, // timestamp of last weekly review
   // Add tab state
   addText: "",
   addPreview: null
@@ -337,6 +340,8 @@ function load() {
       S.words = d.words;
       S.folders = d.folders || [];
       S.folders = buildFolders(S.words);
+      S.notYet = d.notYet || [];
+      S.lastWeeklyReview = d.lastWeeklyReview || null;
     } else {
       initDefaults();
     }
@@ -350,7 +355,7 @@ function initDefaults() {
 
 function save() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ words: S.words, folders: S.folders }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ words: S.words, folders: S.folders, notYet: S.notYet, lastWeeklyReview: S.lastWeeklyReview }));
   } catch (e) {}
 }
 
@@ -615,7 +620,7 @@ function render() {
   ];
   root.appendChild(el("nav", null,
     el("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
-      S.view === "folder" ? el("button", {
+      (S.view === "folder" || S.view === "notyet") ? el("button", {
         style: { background: "var(--sf2)", color: "var(--ac)", padding: "8px 14px", borderRadius: "8px", fontSize: "14px", border: "1px solid var(--bd)", minHeight: "40px" },
         onClick: () => { S.view = "dash"; stopPlayer(); render(); }
       }, "\u2190") : null,
@@ -637,6 +642,7 @@ function render() {
   else if (S.view === "player") renderPlayer(wrap);
   else if (S.view === "add") renderAdd(wrap);
   else if (S.view === "folder") renderFolder(wrap);
+  else if (S.view === "notyet") renderNotYet(wrap);
 }
 
 /* ── DASHBOARD ── */
@@ -718,6 +724,40 @@ function renderDash(wrap) {
       );
     })
   ));
+
+  // 🌱 Not Yet section
+  const notYetWords = S.notYet.map(id => S.words.find(w => w.id === id)).filter(Boolean);
+  const daysSinceWeekly = S.lastWeeklyReview ? Math.floor((Date.now() - S.lastWeeklyReview) / 86400000) : 999;
+  const weeklyDue = daysSinceWeekly >= 7;
+
+  if (notYetWords.length > 0 || weeklyDue) {
+    const nyBox = el("div", { className: "sf", style: { padding: "14px", marginBottom: "14px", borderColor: weeklyDue && notYetWords.length > 0 ? "var(--ac)" : "var(--bd)" } },
+      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" } },
+        el("div", { style: { display: "flex", alignItems: "center", gap: "6px" } },
+          el("span", { style: { fontSize: "16px" } }, "\u{1F331}"),
+          el("span", { style: { fontSize: "15px", fontWeight: "700", color: "var(--ac2)" } }, notYetWords.length + " words growing")
+        ),
+        weeklyDue && notYetWords.length > 0
+          ? el("button", {
+              style: { padding: "8px 14px", borderRadius: "8px", background: "var(--ac)", color: "#000", fontSize: "12px", fontWeight: "700" },
+              onClick: () => { S.view = "notyet"; render(); }
+            }, "Weekly review!")
+          : notYetWords.length > 0
+            ? el("button", {
+                style: { padding: "8px 14px", borderRadius: "8px", background: "var(--sf2)", color: "var(--ac2)", fontSize: "12px", fontWeight: "600", border: "1px solid var(--bd)" },
+                onClick: () => { S.view = "notyet"; render(); }
+              }, "Review")
+            : null
+      ),
+      notYetWords.length > 0 ? el("div", { style: { fontSize: "12px", color: "var(--tx2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
+        notYetWords.map(w => w.en).join(" \u00B7 ")
+      ) : null,
+      S.lastWeeklyReview ? el("div", { style: { fontSize: "11px", color: weeklyDue ? "var(--ac)" : "var(--tx2)", marginTop: "4px" } },
+        "Last review: " + daysAgo(S.lastWeeklyReview) + (weeklyDue ? " \u2014 time to review!" : "")
+      ) : null
+    );
+    b.appendChild(nyBox);
+  }
 
   // Folder list
   S.folders.forEach(f => {
@@ -906,6 +946,110 @@ function renderPlan(wrap) {
     el("div", { style: { fontSize: "13px", fontWeight: "700", color: "var(--ac)", marginBottom: "6px" } }, "\u{1F4A1} Yagodkin Method"),
     el("div", { style: { fontSize: "12px", color: "var(--tx)", lineHeight: "1.6" } },
       "1. Listen to words 2 times (player)\n2. Learn: word \u2192 IPA \u2192 \u{1F50A} \u2192 repeat 3x \u2192 association \u2192 flip\n3. Review: 2x same day, next day, 3 days, 7 days\n4. Don\u2019t say the translation \u2014 visualize the image!"
+    )
+  ));
+}
+
+/* ── NOT YET (growth mindset weekly review) ── */
+function renderNotYet(wrap) {
+  const nyw = S.notYet.map(id => S.words.find(w => w.id === id)).filter(Boolean);
+  const b = el("div", { style: { animation: "fadeUp .3s ease" } });
+  wrap.appendChild(b);
+
+  b.appendChild(el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" } },
+    el("div", null,
+      el("div", { style: { fontSize: "18px", fontWeight: "700", color: "var(--ac2)" } }, "\u{1F331} Not yet \u2014 " + nyw.length + " words"),
+      el("div", { style: { fontSize: "12px", color: "var(--tx2)" } }, "Still learning \u2014 you'll get there!")
+    ),
+    nyw.length > 0 ? el("button", {
+      style: { padding: "8px 14px", borderRadius: "8px", background: "var(--ac2)", color: "#000", fontSize: "12px", fontWeight: "700" },
+      onClick: () => { S.lastWeeklyReview = Date.now(); save(); render(); }
+    }, "\u2705 Done reviewing") : null
+  ));
+
+  if (nyw.length === 0) {
+    b.appendChild(el("div", { className: "sf", style: { padding: "24px", textAlign: "center" } },
+      el("div", { style: { fontSize: "32px", marginBottom: "8px" } }, "\u{1F389}"),
+      el("div", { style: { fontSize: "15px", fontWeight: "600", color: "var(--gn)" } }, "All words learned!"),
+      el("div", { style: { fontSize: "12px", color: "var(--tx2)", marginTop: "4px" } }, "Nothing in Not yet list. Keep going!")
+    ));
+    return;
+  }
+
+  // Cards with Got it / Not yet
+  const w = nyw[S.cardIdx] || nyw[0];
+  const isBack = S.flipped;
+
+  const cardEl = el("div", {
+    className: "card" + (isBack ? " back" : "") + (S.cardAnim ? " " + S.cardAnim : ""),
+    onClick: () => { S.flipped = !S.flipped; S.cardAnim = "animFlip"; render(); setTimeout(() => { S.cardAnim = ""; }, 200); }
+  });
+
+  if (S.direction === "ru") {
+    if (!isBack) {
+      cardEl.appendChild(el("div", { style: { fontSize: "14px", color: "var(--tx2)", marginBottom: "10px" } }, "Translate \u2192"));
+      cardEl.appendChild(el("div", { style: { fontSize: "34px", fontWeight: "800", textAlign: "center" } }, w.ru));
+    } else {
+      cardEl.appendChild(el("div", { style: { fontSize: "36px", fontWeight: "800", color: "var(--ac2)", textAlign: "center" } }, w.en));
+      if (w.ipa) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--tx2)", marginTop: "4px" } }, w.ipa));
+      if (w.say) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)", marginTop: "2px" } }, "[" + w.say + "]"));
+      cardEl.appendChild(el("div", { style: { marginTop: "10px" } },
+        el("button", { className: "spk", onClick: (e) => { e.stopPropagation(); speak(w.en); } }, "\u{1F50A}")
+      ));
+    }
+  } else {
+    if (!isBack) {
+      cardEl.appendChild(el("div", { style: { fontSize: "14px", color: "var(--tx2)", marginBottom: "10px" } }, "Translate \u2192"));
+      cardEl.appendChild(el("div", { style: { fontSize: "36px", fontWeight: "800", textAlign: "center" } }, w.en));
+    } else {
+      cardEl.appendChild(el("div", { style: { fontSize: "36px", fontWeight: "800", color: "var(--ac2)", textAlign: "center" } }, w.ru));
+      if (w.ipa) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--tx2)", marginTop: "4px" } }, w.ipa));
+      if (w.say) cardEl.appendChild(el("div", { style: { fontSize: "16px", color: "var(--bl)", marginTop: "2px" } }, "[" + w.say + "]"));
+    }
+  }
+
+  b.appendChild(cardEl);
+
+  // Swipe
+  setupSwipe(cardEl,
+    () => { if (S.cardIdx < nyw.length - 1) { S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; render(); } },
+    () => { if (S.cardIdx > 0) { S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; render(); } }
+  );
+
+  // Got it / Not yet buttons (only when flipped)
+  if (isBack) {
+    b.appendChild(el("div", { style: { display: "flex", gap: "10px", justifyContent: "center", marginTop: "12px" } },
+      el("button", {
+        style: { flex: "1", padding: "14px", borderRadius: "12px", fontSize: "15px", fontWeight: "700", background: "rgba(76,175,128,.12)", color: "var(--gn)", border: "1.5px solid rgba(76,175,128,.3)", maxWidth: "200px" },
+        onClick: () => {
+          S.notYet = S.notYet.filter(id => id !== w.id);
+          save();
+          if (S.cardIdx >= S.notYet.length) S.cardIdx = Math.max(0, S.notYet.length - 1);
+          S.flipped = false; render();
+        }
+      }, "\u2705 Got it!"),
+      el("button", {
+        style: { flex: "1", padding: "14px", borderRadius: "12px", fontSize: "15px", fontWeight: "700", background: "rgba(240,192,64,.08)", color: "var(--ac)", border: "1.5px solid rgba(240,192,64,.2)", maxWidth: "200px" },
+        onClick: () => {
+          if (S.cardIdx < nyw.length - 1) { S.cardIdx++; } else { S.cardIdx = 0; }
+          S.flipped = false; S.cardAnim = "animL"; render();
+        }
+      }, "\u{1F331} Not yet")
+    ));
+  }
+
+  // Arrows
+  b.appendChild(el("div", { className: "nav-arrows" },
+    el("button", { className: "arrow", onClick: () => { if (S.cardIdx > 0) { S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; render(); } } }, "\u25C0"),
+    el("div", { className: "counter" }, (S.cardIdx + 1) + " / " + nyw.length),
+    el("button", { className: "arrow", onClick: () => { if (S.cardIdx < nyw.length - 1) { S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; render(); } } }, "\u25B6")
+  ));
+
+  // Direction toggle
+  b.appendChild(el("div", { style: { display: "flex", justifyContent: "center", marginTop: "10px" } },
+    el("div", { className: "toggle", style: { maxWidth: "200px" } },
+      el("button", { className: S.direction === "ru" ? "on" : "", onClick: () => { S.direction = "ru"; S.flipped = false; render(); } }, "\u{1F1F7}\u{1F1FA}\u2192\u{1F1EC}\u{1F1E7}"),
+      el("button", { className: S.direction === "en" ? "on" : "", onClick: () => { S.direction = "en"; S.flipped = false; render(); } }, "\u{1F1EC}\u{1F1E7}\u2192\u{1F1F7}\u{1F1FA}")
     )
   ));
 }
@@ -1474,6 +1618,31 @@ function renderReview(parent, fw) {
     () => { if (S.cardIdx < rw.length - 1) { S.cardIdx++; S.flipped = false; S.cardAnim = "animL"; render(); } },
     () => { if (S.cardIdx > 0) { S.cardIdx--; S.flipped = false; S.cardAnim = "animR"; render(); } }
   );
+
+  // Got it / Not yet buttons (only when flipped)
+  if (isBack) {
+    parent.appendChild(el("div", { style: { display: "flex", gap: "10px", justifyContent: "center", marginTop: "10px" } },
+      el("button", {
+        style: { flex: "1", padding: "12px", borderRadius: "10px", fontSize: "14px", fontWeight: "700", background: "rgba(76,175,128,.12)", color: "var(--gn)", border: "1.5px solid rgba(76,175,128,.3)", maxWidth: "180px" },
+        onClick: () => {
+          // Remove from Not yet if present
+          S.notYet = S.notYet.filter(id => id !== w.id);
+          save();
+          if (S.cardIdx < rw.length - 1) { S.cardIdx++; } else { S.cardIdx = 0; }
+          S.flipped = false; S.cardAnim = "animL"; render();
+        }
+      }, "\u2705 Got it"),
+      el("button", {
+        style: { flex: "1", padding: "12px", borderRadius: "10px", fontSize: "14px", fontWeight: "700", background: "rgba(240,192,64,.08)", color: "var(--ac)", border: "1.5px solid rgba(240,192,64,.2)", maxWidth: "180px" },
+        onClick: () => {
+          // Add to Not yet if not already there
+          if (!S.notYet.includes(w.id)) { S.notYet.push(w.id); save(); }
+          if (S.cardIdx < rw.length - 1) { S.cardIdx++; } else { S.cardIdx = 0; }
+          S.flipped = false; S.cardAnim = "animL"; render();
+        }
+      }, "\u{1F331} Not yet")
+    ));
+  }
 
   // Arrows
   parent.appendChild(el("div", { className: "nav-arrows" },
