@@ -512,7 +512,7 @@ function similarity(heard, target) {
   return matches / longer.length;
 }
 
-function scoreColor(s) { return s >= 85 ? "var(--gn)" : s >= 55 ? "var(--ac)" : "var(--rd)"; }
+function scoreColor(s) { return s >= 85 ? "var(--gn)" : s >= 55 ? "var(--ac)" : "var(--bl)"; }
 function formatDate(ts) { return ts ? new Date(ts).toLocaleDateString("en-US", { day: "numeric", month: "short" }) : "—"; }
 function daysAgo(ts) { if (!ts) return ""; const d = Math.floor((Date.now() - ts) / 86400000); return d === 0 ? "today" : d + "d ago"; }
 
@@ -852,8 +852,8 @@ function renderPlan(wrap) {
       el("span", null, "Plan: " + targetByNow + " \u00B7 Fact: " + wordsEffective),
       el("span", { style: { color: wordsEffective >= targetByNow ? "var(--gn)" : "var(--rd)", fontWeight: "600" } },
         wordsEffective >= targetByNow
-          ? "\u2705 on track" + (wordsEffective > targetByNow ? " (+" + (wordsEffective - targetByNow) + ")" : "")
-          : "\u26A0\uFE0F -" + (targetByNow - wordsEffective) + " behind")
+          ? "\u{1F333} Growing strong!" + (wordsEffective > targetByNow ? " (+" + (wordsEffective - targetByNow) + " ahead)" : "")
+          : "\u{1F331} " + wordsEffective + " words in \u2014 keep growing!")
     )
   ));
 
@@ -1464,18 +1464,18 @@ function renderCards(parent, fw) {
         letterBox.appendChild(el("div", { style: {
           width: "28px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center",
           borderRadius: "6px", fontSize: "18px", fontWeight: "700", fontFamily: "monospace",
-          background: match ? "rgba(76,175,128,.15)" : partial ? "rgba(239,83,80,.15)" : "rgba(110,108,120,.1)",
-          color: match ? "var(--gn)" : partial ? "var(--rd)" : "var(--tx2)",
-          border: "1.5px solid " + (match ? "var(--gn)" : partial ? "var(--rd)" : "var(--bd)")
+          background: match ? "rgba(76,175,128,.15)" : partial ? "rgba(240,192,64,.12)" : "rgba(110,108,120,.1)",
+          color: match ? "var(--gn)" : partial ? "var(--ac)" : "var(--tx2)",
+          border: "1.5px solid " + (match ? "var(--gn)" : partial ? "var(--ac)" : "var(--bd)")
         } }, target[i]));
       }
       scoreBox.appendChild(letterBox);
 
       // Legend
       scoreBox.appendChild(el("div", { style: { display: "flex", justifyContent: "center", gap: "14px", marginTop: "8px", fontSize: "11px" } },
-        el("span", { style: { color: "var(--gn)" } }, "\u25CF matched"),
-        el("span", { style: { color: "var(--rd)" } }, "\u25CF didn't match"),
-        el("span", { style: { color: "var(--tx2)" } }, "\u25CF skipped")
+        el("span", { style: { color: "var(--gn)" } }, "\u{1F333} got it"),
+        el("span", { style: { color: "var(--ac)" } }, "\u{1F331} growing"),
+        el("span", { style: { color: "var(--tx2)" } }, "\u25CB not yet")
       ));
 
       // Slow playback button
@@ -1488,11 +1488,11 @@ function renderCards(parent, fw) {
 
       // Tip based on score
       if (sc >= 85) {
-        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--gn)", fontWeight: "600" } }, "\u2705 Excellent!"));
+        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--gn)", fontWeight: "600" } }, "\u{1F333} Nailed it! You grew!"));
       } else if (sc >= 55) {
-        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--ac)" } }, "\u{1F4A1} Listen slowly and repeat"));
+        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--ac)" } }, "\u{1F33F} Almost there! Listen and try again"));
       } else {
-        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--rd)" } }, "\u{1F50A} Listen to reference, note the red letters"));
+        scoreBox.appendChild(el("div", { style: { marginTop: "8px", fontSize: "13px", color: "var(--ac)" } }, "\u{1F331} Getting closer! Listen slowly, you\u2019ll get it"));
       }
 
       pronContainer.appendChild(scoreBox);
@@ -1699,11 +1699,11 @@ function renderDictation(parent, fw) {
   if (S.dictResult !== null) {
     if (S.dictResult) {
       container.appendChild(el("div", { style: { marginTop: "14px", padding: "12px", background: "rgba(76,175,128,.08)", border: "1px solid rgba(76,175,128,.2)", borderRadius: "10px", color: "var(--gn)", fontSize: "16px", fontWeight: "600" } },
-        "\u2713 Correct!"
+        "\u{1F333} You grew!"
       ));
     } else {
-      container.appendChild(el("div", { style: { marginTop: "14px", padding: "12px", background: "rgba(239,83,80,.08)", border: "1px solid rgba(239,83,80,.2)", borderRadius: "10px" } },
-        el("div", { style: { color: "var(--rd)", fontSize: "14px", fontWeight: "600" } }, "\u2717 Correct answer:"),
+      container.appendChild(el("div", { style: { marginTop: "14px", padding: "12px", background: "rgba(240,192,64,.06)", border: "1px solid rgba(240,192,64,.15)", borderRadius: "10px" } },
+        el("div", { style: { color: "var(--ac)", fontSize: "14px", fontWeight: "600" } }, "\u{1F331} Not yet \u2014 the answer is:"),
         el("div", { style: { fontSize: "22px", fontWeight: "800", color: "var(--ac2)", marginTop: "4px" } }, w.en),
         w.ipa ? el("div", { style: { fontSize: "14px", color: "var(--tx2)", marginTop: "2px" } }, w.ipa) : null
       ));
